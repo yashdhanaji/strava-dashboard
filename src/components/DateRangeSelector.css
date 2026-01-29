@@ -1,0 +1,71 @@
+.date-range-selector {
+    background: var(--color-bg-secondary);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--glass-border);
+}
+
+.date-range-selector>label {
+    display: block;
+    margin-bottom: var(--spacing-md);
+}
+
+.date-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.date-presets .btn {
+    padding: var(--spacing-sm) var(--spacing-lg);
+}
+
+.custom-date-inputs {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--glass-border);
+    align-items: flex-end;
+}
+
+.date-input-group {
+    flex: 1;
+}
+
+.date-input-group label {
+    font-size: 0.75rem;
+}
+
+.current-range {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--glass-bg);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+}
+
+.current-range strong {
+    color: var(--color-accent-blue);
+}
+
+@media (max-width: 640px) {
+    .date-presets {
+        flex-direction: column;
+    }
+
+    .date-presets .btn {
+        width: 100%;
+    }
+
+    .custom-date-inputs {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .custom-date-inputs .btn {
+        width: 100%;
+    }
+}
