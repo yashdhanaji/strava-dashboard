@@ -1,82 +1,110 @@
-import { useAuth } from '../contexts/AuthContext';
-import '../styles/Login.css';
+import { useAuth } from '@/contexts/AuthContext'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Activity, BarChart3, Target, Trophy, CheckCircle2 } from 'lucide-react'
 
 const Login = () => {
-    const { login } = useAuth();
+  const { login } = useAuth()
 
-    return (
-        <div className="login-page">
-            <div className="login-container">
-                <div className="login-header">
-                    <h1 className="login-title">
-                        <span className="text-gradient">Strava</span> Stats Dashboard
-                    </h1>
-                    <p className="login-subtitle">
-                        Unlock deeper insights into your athletic performance
-                    </p>
-                </div>
+  const features = [
+    {
+      icon: <BarChart3 className="h-6 w-6" />,
+      title: 'Advanced Analytics',
+      description: 'Comprehensive statistics and visualizations beyond the standard Strava interface',
+    },
+    {
+      icon: <Target className="h-6 w-6" />,
+      title: 'Goal Tracking',
+      description: 'Set custom goals and track your progress in real-time',
+    },
+    {
+      icon: <Activity className="h-6 w-6" />,
+      title: 'Trend Analysis',
+      description: 'Visualize your performance trends over time with beautiful charts',
+    },
+    {
+      icon: <Trophy className="h-6 w-6" />,
+      title: 'Personal Records',
+      description: 'Track and celebrate your achievements and best efforts',
+    },
+  ]
 
-                <div className="features-grid">
-                    <div className="feature-card">
-                        <div className="feature-icon">📊</div>
-                        <h3>Advanced Analytics</h3>
-                        <p>Comprehensive statistics and visualizations beyond the standard Strava interface</p>
-                    </div>
+  const securityFeatures = [
+    'Secure OAuth authentication',
+    'Read-only access to your activities',
+    'No data stored on our servers',
+  ]
 
-                    <div className="feature-card">
-                        <div className="feature-icon">🎯</div>
-                        <h3>Goal Tracking</h3>
-                        <p>Set custom goals and track your progress in real-time</p>
-                    </div>
-
-                    <div className="feature-card">
-                        <div className="feature-icon">📈</div>
-                        <h3>Trend Analysis</h3>
-                        <p>Visualize your performance trends over time with beautiful charts</p>
-                    </div>
-
-                    <div className="feature-card">
-                        <div className="feature-icon">🏆</div>
-                        <h3>Personal Records</h3>
-                        <p>Track and celebrate your achievements and best efforts</p>
-                    </div>
-                </div>
-
-                <div className="login-action">
-                    <button className="btn btn-strava btn-lg" onClick={login}>
-                        <svg className="strava-icon" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
-                        </svg>
-                        Connect with Strava
-                    </button>
-                    <p className="login-privacy">
-                        We'll never post to Strava or share your data without permission
-                    </p>
-                </div>
-
-                <div className="login-features-list">
-                    <div className="feature-item">
-                        <svg className="check-icon" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        <span>Secure OAuth authentication</span>
-                    </div>
-                    <div className="feature-item">
-                        <svg className="check-icon" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        <span>Read-only access to your activities</span>
-                    </div>
-                    <div className="feature-item">
-                        <svg className="check-icon" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        <span>No data stored on our servers</span>
-                    </div>
-                </div>
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="w-full max-w-4xl">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <Activity className="h-7 w-7" />
             </div>
+            <h1 className="text-4xl font-bold">
+              <span className="text-primary">Strava</span> Stats
+            </h1>
+          </div>
+          <p className="text-lg text-muted-foreground">
+            Unlock deeper insights into your athletic performance
+          </p>
         </div>
-    );
-};
 
-export default Login;
+        {/* Features Grid */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-10">
+          {features.map((feature, index) => (
+            <Card key={index} className="text-center">
+              <CardHeader className="pb-2">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary mb-2">
+                  {feature.icon}
+                </div>
+                <CardTitle className="text-base">{feature.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-xs">{feature.description}</CardDescription>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Login Card */}
+        <Card className="max-w-md mx-auto">
+          <CardHeader className="text-center">
+            <CardTitle>Get Started</CardTitle>
+            <CardDescription>Connect your Strava account to view your stats</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Button
+              size="lg"
+              className="w-full gap-2"
+              onClick={login}
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
+              </svg>
+              Connect with Strava
+            </Button>
+
+            <div className="space-y-2">
+              {securityFeatures.map((feature, index) => (
+                <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  <span>{feature}</span>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-xs text-center text-muted-foreground">
+              We'll never post to Strava or share your data without permission
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+export default Login

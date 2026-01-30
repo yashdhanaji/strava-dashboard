@@ -169,6 +169,20 @@ export const findPersonalRecords = (activities) => {
             'halfMarathon': null,
             'marathon': null,
         },
+        candidates: {
+            '5k': [],
+            '10k': [],
+            'halfMarathon': [],
+            'marathon': [],
+        }
+    };
+
+    // Helper to store candidates locally before sorting
+    const allCandidates = {
+        '5k': [],
+        '10k': [],
+        'halfMarathon': [],
+        'marathon': [],
     };
 
     activities.forEach((activity) => {
@@ -207,12 +221,11 @@ export const findPersonalRecords = (activities) => {
                     // Time = Distance / Speed
                     const projectedTime = (targetKm * 1000) / average_speed;
 
-                    if (!records.bestEfforts[key] || projectedTime < records.bestEfforts[key].projected_time) {
-                        records.bestEfforts[key] = {
-                            ...activity,
-                            projected_time: projectedTime
-                        };
-                    }
+                    // Add to raw list
+                    allCandidates[key].push({
+                        ...activity,
+                        projected_time: projectedTime
+                    });
                 }
             };
 
@@ -228,6 +241,18 @@ export const findPersonalRecords = (activities) => {
             // Marathon (min 40.5 km)
             checkRecord('marathon', 42.195, 40.5);
         }
+    });
+
+    // Process all candidates to find the best ones
+    ['5k', '10k', 'halfMarathon', 'marathon'].forEach(key => {
+        // Sort by projected time (ascending)
+        allCandidates[key].sort((a, b) => a.projected_time - b.projected_time);
+
+        // Take top 5 as candidates for API verification
+        records.candidates[key] = allCandidates[key].slice(0, 5);
+
+        // Set the #1 as the default best effort (fallback)
+        records.bestEfforts[key] = records.candidates[key][0] || null;
     });
 
     return records;
