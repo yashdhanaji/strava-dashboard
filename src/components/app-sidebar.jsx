@@ -1,4 +1,5 @@
-import { Home, Activity, Award, BarChart3, Target, HelpCircle, Settings, LogOut, ChevronUp } from "lucide-react"
+import { Home, Activity, Award, BarChart3, Target, Brain, HelpCircle, Settings, LogOut, ChevronUp } from "lucide-react"
+import { NavLink } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 
 import {
@@ -23,16 +24,17 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const navItems = [
-  { title: "Overview", icon: Home, url: "#overview" },
-  { title: "Activities", icon: Activity, url: "#activities" },
-  { title: "Records", icon: Award, url: "#records" },
-  { title: "Analytics", icon: BarChart3, url: "#analytics" },
-  { title: "Goals", icon: Target, url: "#goals" },
+  { title: "Overview", icon: Home, url: "/dashboard" },
+  { title: "Activities", icon: Activity, url: "/activities" },
+  { title: "Records", icon: Award, url: "/records" },
+  { title: "Analytics", icon: BarChart3, url: "/analytics" },
+  { title: "Goals", icon: Target, url: "/goals" },
+  { title: "Training", icon: Brain, url: "/training" },
 ]
 
 const secondaryItems = [
   { title: "Help Center", icon: HelpCircle, url: "#help" },
-  { title: "Settings", icon: Settings, url: "#settings" },
+  { title: "Settings", icon: Settings, url: "/settings" },
 ]
 
 export function AppSidebar() {
@@ -64,10 +66,15 @@ export function AppSidebar() {
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
-                    <a href={item.url}>
+                    <NavLink
+                      to={item.url}
+                      className={({ isActive }) =>
+                        isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""
+                      }
+                    >
                       <item.icon />
                       <span>{item.title}</span>
-                    </a>
+                    </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -82,10 +89,22 @@ export function AppSidebar() {
               {secondaryItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
-                    <a href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </a>
+                    {item.url.startsWith('/') ? (
+                      <NavLink
+                        to={item.url}
+                        className={({ isActive }) =>
+                          isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""
+                        }
+                      >
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    ) : (
+                      <a href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </a>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

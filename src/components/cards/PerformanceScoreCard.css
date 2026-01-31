@@ -1,0 +1,146 @@
+.performance-card {
+    background: var(--gradient-performance);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    color: white;
+    position: relative;
+    overflow: hidden;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: var(--shadow-lg);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.performance-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+}
+
+.performance-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.performance-card__content {
+    position: relative;
+    z-index: 1;
+}
+
+.performance-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.performance-card__icon {
+    font-size: 1.5rem;
+}
+
+.performance-card__title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.performance-card__score-container {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+}
+
+.performance-card__score {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.performance-card__max {
+    font-size: 1rem;
+    opacity: 0.8;
+}
+
+.performance-card__trend {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.trend-icon {
+    font-size: 1rem;
+}
+
+.performance-card__gauge {
+    position: absolute;
+    bottom: var(--spacing-md);
+    right: var(--spacing-md);
+    width: 100px;
+    height: 60px;
+    opacity: 0.9;
+}
+
+.gauge-svg {
+    width: 100%;
+    height: 100%;
+}
+
+.gauge-progress {
+    transition: stroke-dashoffset 1s ease-out;
+}
+
+.performance-card__breakdown {
+    display: flex;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.breakdown-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.breakdown-label {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.breakdown-value {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+@media (max-width: 640px) {
+    .performance-card {
+        min-height: 180px;
+        padding: var(--spacing-lg);
+    }
+
+    .performance-card__score {
+        font-size: 2.5rem;
+    }
+
+    .performance-card__gauge {
+        width: 80px;
+        height: 48px;
+    }
+}

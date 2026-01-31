@@ -1,0 +1,190 @@
+.fitness-card {
+    background: var(--gradient-fitness);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    color: white;
+    position: relative;
+    overflow: hidden;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: var(--shadow-lg);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.fitness-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+}
+
+.fitness-card__content {
+    position: relative;
+    z-index: 1;
+}
+
+.fitness-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.fitness-card__icon {
+    font-size: 1.5rem;
+}
+
+.fitness-card__title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.9;
+    margin: 0;
+    color: rgba(0, 0, 0, 0.7);
+}
+
+.fitness-card__age-container {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+}
+
+.fitness-card__age {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1;
+    color: rgba(0, 0, 0, 0.8);
+    text-shadow: 1px 1px 2px rgba(255,255,255,0.3);
+}
+
+.fitness-card__unit {
+    font-size: 1rem;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.fitness-card__comparison {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.fitness-card__comparison.younger {
+    color: rgba(0, 80, 0, 0.8);
+}
+
+.fitness-card__comparison.older {
+    color: rgba(150, 50, 0, 0.8);
+}
+
+.comparison-icon {
+    font-size: 1rem;
+}
+
+.fitness-card__timeline {
+    position: relative;
+    z-index: 1;
+    margin-top: var(--spacing-lg);
+}
+
+.timeline-track {
+    position: relative;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-full);
+    margin-bottom: var(--spacing-sm);
+}
+
+.timeline-marker {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-full);
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.fitness-marker {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.actual-marker {
+    background: white;
+    border: 2px solid rgba(0, 0, 0, 0.3);
+}
+
+.marker-label {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.625rem;
+    white-space: nowrap;
+    color: rgba(0, 0, 0, 0.6);
+    font-weight: 500;
+}
+
+.timeline-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.fitness-card__vo2 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+}
+
+.vo2-label {
+    font-size: 0.75rem;
+    color: rgba(0, 0, 0, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.vo2-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: rgba(0, 0, 0, 0.8);
+}
+
+.fitness-card__decoration {
+    position: absolute;
+    bottom: -20px;
+    right: -20px;
+    width: 120px;
+    height: 120px;
+    opacity: 0.5;
+}
+
+.decoration-svg {
+    width: 100%;
+    height: 100%;
+}
+
+@media (max-width: 640px) {
+    .fitness-card {
+        min-height: 180px;
+        padding: var(--spacing-lg);
+    }
+
+    .fitness-card__age {
+        font-size: 2.5rem;
+    }
+
+    .fitness-card__timeline {
+        margin-top: var(--spacing-md);
+    }
+}

@@ -4,6 +4,11 @@ import Login from '@/pages/Login'
 import Callback from '@/pages/Callback'
 import Dashboard from '@/pages/Dashboard'
 import Activities from '@/pages/Activities'
+import Records from '@/pages/Records'
+import Analytics from '@/pages/Analytics'
+import Goals from '@/pages/Goals'
+import Training from '@/pages/Training'
+import Settings from '@/pages/Settings'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -52,6 +57,54 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/activities"
+        element={
+          <ProtectedRoute>
+            <Activities />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/records"
+        element={
+          <ProtectedRoute>
+            <Records />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <Analytics />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/goals"
+        element={
+          <ProtectedRoute>
+            <Goals />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/training"
+        element={
+          <ProtectedRoute>
+            <Training />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Settings />
           </ProtectedRoute>
         }
       />
