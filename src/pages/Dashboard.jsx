@@ -6,11 +6,9 @@ import { toUnixTimestamp } from '@/utils/dateHelpers'
 import { calculateAggregateStats, findPersonalRecords, formatDistance, formatDuration, formatPace, groupByWeek, metersToKm } from '@/utils/dataProcessing'
 
 import { AppSidebar } from '@/components/app-sidebar'
-import { DateRangePicker } from '@/components/date-range-picker'
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
-import { Separator } from '@/components/ui/separator'
+import { TopNavBar } from '@/components/top-navbar'
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -20,32 +18,35 @@ import {
 } from '@/components/ui/chart'
 import { Area, AreaChart, XAxis, YAxis, CartesianGrid } from 'recharts'
 
-import { Activity, TrendingUp, Clock, Zap, Award, MapPin, RefreshCw } from 'lucide-react'
+import { Activity, TrendingUp, Clock, Zap, Award, MapPin } from 'lucide-react'
 
-// Default to last 30 days
-const getDefaultDateRange = () => ({
-  start: subDays(new Date(), 30),
-  end: new Date(),
-})
+// Time range mapping
+const TIME_RANGE_DAYS = {
+  '7d': 7,
+  '30d': 30,
+  '90d': 90,
+  '180d': 180,
+  '1y': 365,
+  'all': null,
+}
 
 const Dashboard = () => {
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [activities, setActivities] = useState([])
   const [filteredActivities, setFilteredActivities] = useState([])
-  const [dateRange, setDateRange] = useState(getDefaultDateRange)
-  const [selectedTypes, setSelectedTypes] = useState([])
+  const [timeRange, setTimeRange] = useState('30d')
+  const [sportFilter, setSportFilter] = useState('all')
   const [stats, setStats] = useState(null)
   const [records, setRecords] = useState(null)
 
-  // Load activities when date range changes
+  // Load activities when time range changes
   const loadActivities = useCallback(async () => {
-    if (!dateRange?.start || !dateRange?.end) return
-
     setLoading(true)
     try {
-      const after = toUnixTimestamp(dateRange.start)
-      const before = toUnixTimestamp(dateRange.end)
+      const days = TIME_RANGE_DAYS[timeRange]
+      const after = days ? toUnixTimestamp(subDays(new Date(), days)) : null
+      const before = toUnixTimestamp(new Date())
 
       const data = await stravaApi.getAllActivities(after, before, (count) => {
         console.log(`Loaded ${count} activities...`)
@@ -57,16 +58,14 @@ const Dashboard = () => {
     } finally {
       setLoading(false)
     }
-  }, [dateRange])
+  }, [timeRange])
 
-  // Filter activities by type
+  // Filter activities by sport type
   const filterActivities = useCallback(() => {
     let filtered = activities
 
-    if (selectedTypes.length > 0) {
-      filtered = activities.filter((activity) =>
-        selectedTypes.includes(activity.type)
-      )
+    if (sportFilter !== 'all') {
+      filtered = activities.filter((activity) => activity.type === sportFilter)
     }
 
     setFilteredActivities(filtered)
@@ -78,7 +77,7 @@ const Dashboard = () => {
       setStats(null)
       setRecords(null)
     }
-  }, [activities, selectedTypes])
+  }, [activities, sportFilter])
 
   useEffect(() => {
     loadActivities()
@@ -87,13 +86,6 @@ const Dashboard = () => {
   useEffect(() => {
     filterActivities()
   }, [filterActivities])
-
-  // Handle date range change
-  const handleDateRangeChange = (newRange) => {
-    setDateRange(newRange)
-  }
-
-  const activityTypes = [...new Set(activities.map((a) => a.type))]
 
   // Chart data
   const chartData = groupByWeek(filteredActivities).map((item) => ({
@@ -114,72 +106,25 @@ const Dashboard = () => {
     : 0
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <AppSidebar />
       <SidebarInset>
-        {/* Header */}
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <div className="flex flex-1 items-center justify-between">
-            <div className="hidden sm:block">
-              <h1 className="text-lg font-semibold">
-                Welcome back, <span className="text-primary">{user?.firstname}</span>!
-              </h1>
-              <p className="text-sm text-muted-foreground">Here's your athletic performance overview</p>
-            </div>
-            <Button variant="outline" size="sm" onClick={loadActivities} disabled={loading}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              Sync
-            </Button>
-          </div>
-        </header>
+        <TopNavBar
+          timeRange={timeRange}
+          onTimeRangeChange={setTimeRange}
+          sportFilter={sportFilter}
+          onSportFilterChange={setSportFilter}
+        />
 
         {/* Main Content */}
         <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-          {/* Filters Row */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            {/* Date Range Picker */}
-            <DateRangePicker
-              dateRange={dateRange}
-              onDateRangeChange={handleDateRangeChange}
-            />
-
-            {/* Activity Type Filters */}
-            {activityTypes.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                {activityTypes.map((type) => (
-                  <Badge
-                    key={type}
-                    variant={selectedTypes.includes(type) ? "default" : "outline"}
-                    className="cursor-pointer transition-colors"
-                    onClick={() => {
-                      if (selectedTypes.includes(type)) {
-                        setSelectedTypes(selectedTypes.filter((t) => t !== type))
-                      } else {
-                        setSelectedTypes([...selectedTypes, type])
-                      }
-                    }}
-                  >
-                    {type}
-                  </Badge>
-                ))}
-                {selectedTypes.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={() => setSelectedTypes([])}>
-                    Clear
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-
           {loading ? (
             <LoadingSkeleton />
           ) : filteredActivities.length === 0 ? (
             <Card className="flex flex-col items-center justify-center py-12">
               <Activity className="h-12 w-12 text-muted-foreground mb-4" />
               <CardTitle className="mb-2">No activities found</CardTitle>
-              <CardDescription>Try adjusting your date range or filters</CardDescription>
+              <CardDescription>Try adjusting your time range or sport filter</CardDescription>
             </Card>
           ) : (
             <>

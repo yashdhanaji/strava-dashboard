@@ -7,9 +7,8 @@ import { toUnixTimestamp } from '@/utils/dateHelpers'
 import { formatDistance, formatDuration, formatPace, formatSpeed, formatElevation } from '@/utils/dataProcessing'
 
 import { AppSidebar } from '@/components/app-sidebar'
-import { DateRangePicker } from '@/components/date-range-picker'
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
-import { Separator } from '@/components/ui/separator'
+import { TopNavBar } from '@/components/top-navbar'
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -178,26 +177,14 @@ const Activities = () => {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <AppSidebar />
       <SidebarInset>
-        {/* Header */}
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <div className="flex flex-1 items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold">Activities</h1>
-              <p className="text-sm text-muted-foreground">
-                {filteredActivities.length} activities found
-              </p>
-            </div>
-            <Button variant="outline" size="sm" onClick={loadActivities} disabled={loading}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              Sync
-            </Button>
-          </div>
-        </header>
+        <TopNavBar
+          title="Activities"
+          subtitle={`${filteredActivities.length} activities found`}
+          showFilters={false}
+        />
 
         {/* Main Content */}
         <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">

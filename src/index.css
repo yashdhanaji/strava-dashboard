@@ -168,3 +168,38 @@
     transform: rotate(360deg);
   }
 }
+
+/* Minimal Icon Navbar - Circular Button Styles */
+.nav-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background-color: #ffffff;
+  color: #9ca3af;
+  transition: all 150ms ease-in-out;
+}
+
+.nav-icon-button:hover {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.nav-icon-button.active,
+.nav-icon-button[data-active="true"] {
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
+.nav-icon-button.active:hover,
+.nav-icon-button[data-active="true"]:hover {
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
+.nav-icon-button svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}

@@ -3,8 +3,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import stravaApi from '@/services/stravaApi'
 
 import { AppSidebar } from '@/components/app-sidebar'
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
-import { Separator } from '@/components/ui/separator'
+import { TopNavBar } from '@/components/top-navbar'
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -89,28 +89,14 @@ const Training = () => {
   const currentWeekWorkouts = weekInfo?.currentWeek?.workouts || []
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <AppSidebar />
       <SidebarInset>
-        {/* Header */}
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <div className="flex flex-1 items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold">Training Plan</h1>
-              <p className="text-sm text-muted-foreground">
-                AI-powered training insights for your race goals
-              </p>
-            </div>
-            {activePlan && !showWizard && (
-              <Button onClick={() => setShowWizard(true)} variant="outline" size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                New Plan
-              </Button>
-            )}
-          </div>
-        </header>
+        <TopNavBar
+          title="Training Plan"
+          subtitle="AI-powered training insights"
+          showFilters={false}
+        />
 
         {/* Main Content */}
         <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">

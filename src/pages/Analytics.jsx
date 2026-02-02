@@ -17,8 +17,8 @@ import {
 } from '@/utils/dataProcessing'
 
 import { AppSidebar } from '@/components/app-sidebar'
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
-import { Separator } from '@/components/ui/separator'
+import { TopNavBar } from '@/components/top-navbar'
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -216,67 +216,20 @@ const Analytics = () => {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <AppSidebar />
       <SidebarInset>
-        {/* Header */}
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <div className="flex flex-1 items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold">Analytics</h1>
-              <p className="text-sm text-muted-foreground">
-                Insights from {filteredActivities.length} activities
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIME_RANGES.map((range) => (
-                    <SelectItem key={range.value} value={range.value}>
-                      {range.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm" onClick={loadActivities} disabled={loading}>
-                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                Sync
-              </Button>
-            </div>
-          </div>
-        </header>
+        <TopNavBar
+          title="Analytics"
+          subtitle={`Insights from ${filteredActivities.length} activities`}
+          timeRange={timeRange}
+          onTimeRangeChange={setTimeRange}
+          sportFilter={selectedType}
+          onSportFilterChange={setSelectedType}
+        />
 
         {/* Main Content */}
         <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-          {/* Activity Type Filter */}
-          {activityTypes.length > 1 && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-muted-foreground">Filter:</span>
-              <Badge
-                variant={selectedType === 'all' ? 'default' : 'outline'}
-                className="cursor-pointer"
-                onClick={() => setSelectedType('all')}
-              >
-                All Types
-              </Badge>
-              {activityTypes.map((type) => (
-                <Badge
-                  key={type}
-                  variant={selectedType === type ? 'default' : 'outline'}
-                  className="cursor-pointer"
-                  onClick={() => setSelectedType(type)}
-                >
-                  {type}
-                </Badge>
-              ))}
-            </div>
-          )}
-
           {loading ? (
             <LoadingSkeleton />
           ) : filteredActivities.length === 0 ? (
