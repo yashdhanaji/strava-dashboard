@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { subDays, subMonths, format, startOfYear } from 'date-fns'
+import { subDays, format, startOfYear } from 'date-fns'
 import { useAuth } from '@/contexts/AuthContext'
 import stravaApi from '@/services/stravaApi'
 import { toUnixTimestamp } from '@/utils/dateHelpers'
@@ -7,66 +7,47 @@ import {
   formatDistance,
   formatDuration,
   formatPace,
-  formatSpeed,
   groupByWeek,
   groupByMonth,
   groupByDayOfWeek,
   groupByTimeOfDay,
   calculateAggregateStats,
   metersToKm,
+  findPersonalRecords,
 } from '@/utils/dataProcessing'
 
 import { AppSidebar } from '@/components/app-sidebar'
 import { TopNavBar } from '@/components/top-navbar'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
 } from '@/components/ui/chart'
 import {
   Area,
   AreaChart,
   Bar,
   BarChart,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
-  ResponsiveContainer,
 } from 'recharts'
 
 import {
-  BarChart3,
   TrendingUp,
+  TrendingDown,
   Clock,
-  Calendar,
-  RefreshCw,
   Activity,
   MapPin,
   Zap,
-  Sun,
-  Moon,
-  Sunrise,
-  Sunset,
+  Flame,
+  Trophy,
+  Calendar,
+  ArrowUpRight,
+  Mountain,
 } from 'lucide-react'
 
 const TIME_RANGES = [
@@ -76,14 +57,6 @@ const TIME_RANGES = [
   { value: 'ytd', label: 'Year to Date', days: null },
   { value: '1y', label: 'Last Year', days: 365 },
   { value: 'all', label: 'All Time', days: null },
-]
-
-const COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
 ]
 
 const TYPE_COLORS = {
@@ -123,9 +96,7 @@ const Analytics = () => {
       const after = start ? toUnixTimestamp(start) : null
       const before = end ? toUnixTimestamp(end) : null
 
-      const data = await stravaApi.getAllActivities(after, before, (count) => {
-        console.log(`Loaded ${count} activities...`)
-      })
+      const data = await stravaApi.getAllActivities(after, before)
       setActivities(data)
     } catch (error) {
       console.error('Failed to load activities:', error)
@@ -144,21 +115,16 @@ const Analytics = () => {
     return activities.filter((a) => a.type === selectedType)
   }, [activities, selectedType])
 
-  // Get unique activity types
-  const activityTypes = useMemo(() => {
-    return [...new Set(activities.map((a) => a.type))]
-  }, [activities])
-
   // Calculate stats
   const stats = useMemo(() => calculateAggregateStats(filteredActivities), [filteredActivities])
+  const records = useMemo(() => findPersonalRecords(filteredActivities), [filteredActivities])
 
   // Weekly trend data
   const weeklyData = useMemo(() => {
     return groupByWeek(filteredActivities).map((item) => ({
       week: item.week.replace(/^\d{4}-/, ''),
       distance: parseFloat(metersToKm(item.distance).toFixed(1)),
-      time: Math.round(item.time / 60), // minutes
-      elevation: Math.round(item.elevation),
+      time: Math.round(item.time / 60),
       count: item.count,
     }))
   }, [filteredActivities])
@@ -166,53 +132,59 @@ const Analytics = () => {
   // Monthly trend data
   const monthlyData = useMemo(() => {
     return groupByMonth(filteredActivities).map((item) => ({
-      month: format(new Date(item.month + '-01'), 'MMM yy'),
+      month: format(new Date(item.month + '-01'), 'MMM'),
       distance: parseFloat(metersToKm(item.distance).toFixed(1)),
-      time: Math.round(item.time / 60),
-      elevation: Math.round(item.elevation),
       count: item.count,
     }))
   }, [filteredActivities])
 
   // Day of week data
-  const dayOfWeekData = useMemo(() => {
-    return groupByDayOfWeek(filteredActivities)
+  const dayOfWeekData = useMemo(() => groupByDayOfWeek(filteredActivities), [filteredActivities])
+
+  // Calculate period comparison (current vs previous)
+  const periodComparison = useMemo(() => {
+    const range = TIME_RANGES.find((r) => r.value === timeRange)
+    if (!range?.days || filteredActivities.length === 0) return null
+
+    const now = new Date()
+    const midPoint = subDays(now, Math.floor(range.days / 2))
+
+    const currentPeriod = filteredActivities.filter(a => new Date(a.start_date) >= midPoint)
+    const previousPeriod = filteredActivities.filter(a => new Date(a.start_date) < midPoint)
+
+    const currentDistance = currentPeriod.reduce((sum, a) => sum + a.distance, 0)
+    const previousDistance = previousPeriod.reduce((sum, a) => sum + a.distance, 0)
+
+    const change = previousDistance > 0
+      ? ((currentDistance - previousDistance) / previousDistance) * 100
+      : 0
+
+    return { change, isPositive: change >= 0 }
+  }, [filteredActivities, timeRange])
+
+  // Top activities
+  const topActivities = useMemo(() => {
+    return [...filteredActivities]
+      .sort((a, b) => b.distance - a.distance)
+      .slice(0, 5)
   }, [filteredActivities])
 
-  // Time of day data
-  const timeOfDayData = useMemo(() => {
-    return groupByTimeOfDay(filteredActivities)
+  // Recent activities
+  const recentActivities = useMemo(() => {
+    return [...filteredActivities]
+      .sort((a, b) => new Date(b.start_date) - new Date(a.start_date))
+      .slice(0, 5)
   }, [filteredActivities])
 
-  // Activity type distribution
-  const typeDistribution = useMemo(() => {
-    return Object.entries(stats.byType).map(([type, data]) => ({
-      name: type,
-      value: data.count,
-      distance: data.distance,
-      color: TYPE_COLORS[type] || '#6b7280',
-    }))
-  }, [stats])
-
-  // Pace/Speed trend (for runs)
-  const paceTrendData = useMemo(() => {
-    const runs = filteredActivities.filter((a) => a.type === 'Run' && a.average_speed > 0)
-    return runs
-      .sort((a, b) => new Date(a.start_date) - new Date(b.start_date))
-      .slice(-20)
-      .map((activity) => ({
-        date: format(new Date(activity.start_date), 'MMM d'),
-        pace: parseFloat((1000 / activity.average_speed / 60).toFixed(2)), // min/km
-        distance: parseFloat(metersToKm(activity.distance).toFixed(1)),
-      }))
-  }, [filteredActivities])
+  // Most active day
+  const mostActiveDay = useMemo(() => {
+    if (dayOfWeekData.length === 0) return null
+    return dayOfWeekData.reduce((max, day) => day.count > max.count ? day : max, dayOfWeekData[0])
+  }, [dayOfWeekData])
 
   const chartConfig = {
     distance: { label: 'Distance (km)', color: 'hsl(var(--chart-1))' },
-    time: { label: 'Time (min)', color: 'hsl(var(--chart-2))' },
-    elevation: { label: 'Elevation (m)', color: 'hsl(var(--chart-3))' },
     count: { label: 'Activities', color: 'hsl(var(--chart-4))' },
-    pace: { label: 'Pace (min/km)', color: 'hsl(var(--chart-5))' },
   }
 
   return (
@@ -220,8 +192,6 @@ const Analytics = () => {
       <AppSidebar />
       <SidebarInset>
         <TopNavBar
-          title="Analytics"
-          subtitle={`Insights from ${filteredActivities.length} activities`}
           timeRange={timeRange}
           onTimeRangeChange={setTimeRange}
           sportFilter={selectedType}
@@ -234,64 +204,104 @@ const Analytics = () => {
             <LoadingSkeleton />
           ) : filteredActivities.length === 0 ? (
             <Card className="flex flex-col items-center justify-center py-12">
-              <BarChart3 className="h-12 w-12 text-muted-foreground mb-4" />
+              <Activity className="h-12 w-12 text-muted-foreground mb-4" />
               <CardTitle className="mb-2">No data to analyze</CardTitle>
               <CardDescription>Try adjusting your time range or filters</CardDescription>
             </Card>
           ) : (
-            <Tabs defaultValue="trends" className="space-y-6">
-              <TabsList>
-                <TabsTrigger value="trends">Trends</TabsTrigger>
-                <TabsTrigger value="distribution">Distribution</TabsTrigger>
-                <TabsTrigger value="patterns">Patterns</TabsTrigger>
-                {filteredActivities.some((a) => a.type === 'Run') && (
-                  <TabsTrigger value="performance">Performance</TabsTrigger>
-                )}
-              </TabsList>
+            <>
+              {/* Section 1: High-Level Summary */}
+              <div className="grid gap-4 md:grid-cols-4">
+                {/* Primary Metric - Total Distance */}
+                <Card className="md:col-span-2 bg-gradient-to-br from-primary to-primary/80">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-primary-foreground/70">Total Distance</p>
+                        <p className="text-4xl font-bold text-primary-foreground mt-1">
+                          {formatDistance(stats.totalDistance)}
+                        </p>
+                        <p className="text-sm text-primary-foreground/60 mt-1">
+                          {stats.totalActivities} activities
+                        </p>
+                      </div>
+                      {periodComparison && (
+                        <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                          periodComparison.isPositive
+                            ? 'bg-green-500/20 text-green-100'
+                            : 'bg-red-500/20 text-red-100'
+                        }`}>
+                          {periodComparison.isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                          {Math.abs(periodComparison.change).toFixed(1)}%
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
 
-              {/* Trends Tab */}
-              <TabsContent value="trends" className="space-y-6">
-                {/* Summary Stats */}
-                <div className="grid gap-4 md:grid-cols-4">
-                  <StatCard
-                    icon={<MapPin className="h-4 w-4" />}
-                    label="Total Distance"
-                    value={formatDistance(stats.totalDistance)}
-                  />
-                  <StatCard
-                    icon={<Clock className="h-4 w-4" />}
-                    label="Total Time"
-                    value={formatDuration(stats.totalTime)}
-                  />
-                  <StatCard
-                    icon={<TrendingUp className="h-4 w-4" />}
-                    label="Total Elevation"
-                    value={`${Math.round(stats.totalElevation).toLocaleString()} m`}
-                  />
-                  <StatCard
-                    icon={<Activity className="h-4 w-4" />}
-                    label="Avg per Activity"
-                    value={formatDistance(stats.totalDistance / stats.totalActivities)}
-                  />
-                </div>
-
-                {/* Weekly Distance Chart */}
+                {/* KPI Cards */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Weekly Distance</CardTitle>
-                    <CardDescription>Distance covered each week</CardDescription>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <Clock className="h-4 w-4" />
+                      <span className="text-xs font-medium">Total Time</span>
+                    </div>
+                    <p className="text-2xl font-bold">{formatDuration(stats.totalTime)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Avg {formatDuration(stats.totalTime / stats.totalActivities)} per activity
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <Mountain className="h-4 w-4" />
+                      <span className="text-xs font-medium">Elevation Gain</span>
+                    </div>
+                    <p className="text-2xl font-bold">{Math.round(stats.totalElevation).toLocaleString()}m</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Avg {Math.round(stats.totalElevation / stats.totalActivities)}m per activity
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Section 2: Main Visualization + Insights Panel */}
+              <div className="grid gap-6 lg:grid-cols-3">
+                {/* Primary Zone - Main Chart */}
+                <Card className="lg:col-span-2">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">Performance Trend</CardTitle>
+                        <CardDescription>Weekly distance over time</CardDescription>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <ChartContainer config={chartConfig} className="h-[300px] w-full">
-                      <AreaChart data={weeklyData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="week" tickLine={false} axisLine={false} tickMargin={8} />
-                        <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                    <ChartContainer config={chartConfig} className="h-[320px] w-full">
+                      <AreaChart data={weeklyData} margin={{ left: 0, right: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                        <XAxis
+                          dataKey="week"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={8}
+                          tick={{ fontSize: 11, fill: '#9ca3af' }}
+                        />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={8}
+                          tick={{ fontSize: 11, fill: '#9ca3af' }}
+                          width={40}
+                        />
                         <ChartTooltip content={<ChartTooltipContent />} />
                         <defs>
                           <linearGradient id="fillDistance" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="var(--color-distance)" stopOpacity={0.8} />
-                            <stop offset="95%" stopColor="var(--color-distance)" stopOpacity={0.1} />
+                            <stop offset="5%" stopColor="var(--color-distance)" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="var(--color-distance)" stopOpacity={0.05} />
                           </linearGradient>
                         </defs>
                         <Area
@@ -306,253 +316,242 @@ const Analytics = () => {
                   </CardContent>
                 </Card>
 
-                {/* Monthly Comparison */}
+                {/* Secondary Panel - Insights */}
+                <div className="space-y-4">
+                  {/* Best Performers */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Trophy className="h-4 w-4 text-yellow-500" />
+                        Top Performances
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {records.longestDistance && (
+                        <InsightRow
+                          label="Longest"
+                          value={formatDistance(records.longestDistance.distance)}
+                          sublabel={records.longestDistance.name}
+                        />
+                      )}
+                      {records.fastestPace && (
+                        <InsightRow
+                          label="Fastest"
+                          value={formatPace(records.fastestPace.average_speed)}
+                          sublabel={records.fastestPace.name}
+                        />
+                      )}
+                      {records.mostElevation && (
+                        <InsightRow
+                          label="Most Climb"
+                          value={`${Math.round(records.mostElevation.total_elevation_gain)}m`}
+                          sublabel={records.mostElevation.name}
+                        />
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Quick Stats */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-primary" />
+                        Quick Stats
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <InsightRow
+                        label="Avg Distance"
+                        value={formatDistance(stats.totalDistance / stats.totalActivities)}
+                      />
+                      {mostActiveDay && (
+                        <InsightRow
+                          label="Most Active"
+                          value={mostActiveDay.day}
+                          sublabel={`${mostActiveDay.count} activities`}
+                        />
+                      )}
+                      <InsightRow
+                        label="This Period"
+                        value={`${stats.totalActivities} activities`}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* Recent Activity */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        Recent
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {recentActivities.slice(0, 3).map((activity) => (
+                        <div key={activity.id} className="flex items-center justify-between py-1">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div
+                              className="w-2 h-2 rounded-full shrink-0"
+                              style={{ backgroundColor: TYPE_COLORS[activity.type] || '#6b7280' }}
+                            />
+                            <span className="text-xs truncate">{activity.name}</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                            {formatDistance(activity.distance)}
+                          </span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Section 3: Detail-Level Sections */}
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Monthly Breakdown */}
                 {monthlyData.length > 1 && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>Monthly Comparison</CardTitle>
-                      <CardDescription>Distance and activity count by month</CardDescription>
+                      <CardTitle className="text-base">Monthly Breakdown</CardTitle>
+                      <CardDescription>Distance by month</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                      <ChartContainer config={chartConfig} className="h-[200px] w-full">
                         <BarChart data={monthlyData}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
-                          <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                          <XAxis
+                            dataKey="month"
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={8}
+                            tick={{ fontSize: 11, fill: '#9ca3af' }}
+                          />
+                          <YAxis
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={8}
+                            tick={{ fontSize: 11, fill: '#9ca3af' }}
+                            width={35}
+                          />
                           <ChartTooltip content={<ChartTooltipContent />} />
-                          <ChartLegend content={<ChartLegendContent />} />
                           <Bar dataKey="distance" fill="var(--color-distance)" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="count" fill="var(--color-count)" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ChartContainer>
                     </CardContent>
                   </Card>
                 )}
-              </TabsContent>
 
-              {/* Distribution Tab */}
-              <TabsContent value="distribution" className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  {/* Activity Type Distribution */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Activity Types</CardTitle>
-                      <CardDescription>Distribution by activity type</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ChartContainer config={chartConfig} className="h-[300px] w-full">
-                        <PieChart>
-                          <Pie
-                            data={typeDistribution}
-                            dataKey="value"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={100}
-                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                          >
-                            {typeDistribution.map((entry, index) => (
-                              <Cell key={entry.name} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <ChartTooltip content={<ChartTooltipContent />} />
-                        </PieChart>
-                      </ChartContainer>
-                    </CardContent>
-                  </Card>
-
-                  {/* Type Stats Table */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>By Activity Type</CardTitle>
-                      <CardDescription>Breakdown of stats per type</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {Object.entries(stats.byType)
-                          .sort((a, b) => b[1].count - a[1].count)
-                          .map(([type, data]) => (
-                            <div key={type} className="flex items-center gap-4">
-                              <div
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: TYPE_COLORS[type] || '#6b7280' }}
-                              />
-                              <div className="flex-1">
-                                <p className="font-medium">{type}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {data.count} activities
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <p className="font-medium">{formatDistance(data.distance)}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {formatDuration(data.time)}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              {/* Patterns Tab */}
-              <TabsContent value="patterns" className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  {/* Day of Week */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Day of Week</CardTitle>
-                      <CardDescription>When you're most active</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ChartContainer config={chartConfig} className="h-[250px] w-full">
-                        <BarChart data={dayOfWeekData} layout="vertical">
-                          <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                          <XAxis type="number" tickLine={false} axisLine={false} />
-                          <YAxis
-                            type="category"
-                            dataKey="day"
-                            tickLine={false}
-                            axisLine={false}
-                            width={80}
-                          />
-                          <ChartTooltip content={<ChartTooltipContent />} />
-                          <Bar dataKey="count" fill="var(--color-count)" radius={[0, 4, 4, 0]} />
-                        </BarChart>
-                      </ChartContainer>
-                    </CardContent>
-                  </Card>
-
-                  {/* Time of Day */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Time of Day</CardTitle>
-                      <CardDescription>Your preferred workout times</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {timeOfDayData.map((item) => {
-                          const total = timeOfDayData.reduce((sum, i) => sum + i.count, 0)
-                          const percentage = total > 0 ? (item.count / total) * 100 : 0
-                          const Icon = getTimeIcon(item.time)
-
-                          return (
-                            <div key={item.time} className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <Icon className="h-4 w-4 text-muted-foreground" />
-                                  <span className="font-medium">{item.time}</span>
-                                </div>
-                                <span className="text-sm text-muted-foreground">
-                                  {item.count} ({percentage.toFixed(0)}%)
-                                </span>
-                              </div>
-                              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-primary rounded-full transition-all"
-                                  style={{ width: `${percentage}%` }}
-                                />
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Weekly Activity Heatmap Style */}
+                {/* Activity by Day of Week */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Activity Frequency</CardTitle>
-                    <CardDescription>Number of activities per week</CardDescription>
+                    <CardTitle className="text-base">Weekly Pattern</CardTitle>
+                    <CardDescription>When you're most active</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ChartContainer config={chartConfig} className="h-[200px] w-full">
-                      <BarChart data={weeklyData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="week" tickLine={false} axisLine={false} tickMargin={8} />
-                        <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                      <BarChart data={dayOfWeekData} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                        <XAxis
+                          type="number"
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{ fontSize: 11, fill: '#9ca3af' }}
+                        />
+                        <YAxis
+                          type="category"
+                          dataKey="day"
+                          tickLine={false}
+                          axisLine={false}
+                          width={60}
+                          tick={{ fontSize: 11, fill: '#9ca3af' }}
+                        />
                         <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey="count" fill="var(--color-count)" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="count" fill="var(--color-count)" radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ChartContainer>
                   </CardContent>
                 </Card>
-              </TabsContent>
+              </div>
 
-              {/* Performance Tab (Running) */}
-              {filteredActivities.some((a) => a.type === 'Run') && (
-                <TabsContent value="performance" className="space-y-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Pace Trend</CardTitle>
-                      <CardDescription>Your running pace over recent activities (lower is faster)</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {paceTrendData.length > 0 ? (
-                        <ChartContainer config={chartConfig} className="h-[300px] w-full">
-                          <LineChart data={paceTrendData}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
-                            <YAxis
-                              tickLine={false}
-                              axisLine={false}
-                              tickMargin={8}
-                              domain={['dataMin - 0.5', 'dataMax + 0.5']}
-                              tickFormatter={(value) => `${value.toFixed(1)}`}
-                            />
-                            <ChartTooltip
-                              content={<ChartTooltipContent />}
-                              formatter={(value) => [`${value.toFixed(2)} min/km`, 'Pace']}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="pace"
-                              stroke="var(--color-pace)"
-                              strokeWidth={2}
-                              dot={{ fill: 'var(--color-pace)', r: 4 }}
-                            />
-                          </LineChart>
-                        </ChartContainer>
-                      ) : (
-                        <p className="text-center text-muted-foreground py-8">
-                          No running data available
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Running Stats Summary */}
-                  {stats.byType['Run'] && (
-                    <div className="grid gap-4 md:grid-cols-4">
-                      <StatCard
-                        icon={<Activity className="h-4 w-4" />}
-                        label="Total Runs"
-                        value={stats.byType['Run'].count}
-                      />
-                      <StatCard
-                        icon={<MapPin className="h-4 w-4" />}
-                        label="Total Distance"
-                        value={formatDistance(stats.byType['Run'].distance)}
-                      />
-                      <StatCard
-                        icon={<Clock className="h-4 w-4" />}
-                        label="Total Time"
-                        value={formatDuration(stats.byType['Run'].time)}
-                      />
-                      <StatCard
-                        icon={<Zap className="h-4 w-4" />}
-                        label="Avg Pace"
-                        value={formatPace(stats.byType['Run'].distance / stats.byType['Run'].time)}
-                      />
+              {/* Section 4: Activity Type Breakdown */}
+              {Object.keys(stats.byType).length > 1 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Activity Breakdown</CardTitle>
+                    <CardDescription>Stats by activity type</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {Object.entries(stats.byType)
+                        .sort((a, b) => b[1].distance - a[1].distance)
+                        .map(([type, data]) => (
+                          <div
+                            key={type}
+                            className="flex items-center gap-4 p-4 rounded-lg border bg-card"
+                          >
+                            <div
+                              className="w-10 h-10 rounded-full flex items-center justify-center"
+                              style={{ backgroundColor: `${TYPE_COLORS[type]}20` }}
+                            >
+                              <Activity
+                                className="h-5 w-5"
+                                style={{ color: TYPE_COLORS[type] || '#6b7280' }}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm">{type}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {data.count} activities
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-semibold text-sm">{formatDistance(data.distance)}</p>
+                              <p className="text-xs text-muted-foreground">{formatDuration(data.time)}</p>
+                            </div>
+                          </div>
+                        ))}
                     </div>
-                  )}
-                </TabsContent>
+                  </CardContent>
+                </Card>
               )}
-            </Tabs>
+
+              {/* Section 5: Top Activities List */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Top Activities</CardTitle>
+                  <CardDescription>Your longest activities this period</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {topActivities.map((activity, index) => (
+                      <div
+                        key={activity.id}
+                        className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                          {index + 1}
+                        </div>
+                        <div
+                          className="w-2 h-8 rounded-full"
+                          style={{ backgroundColor: TYPE_COLORS[activity.type] || '#6b7280' }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{activity.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(activity.start_date), 'MMM d, yyyy')} · {activity.type}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">{formatDistance(activity.distance)}</p>
+                          <p className="text-xs text-muted-foreground">{formatDuration(activity.moving_time)}</p>
+                        </div>
+                        <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </>
           )}
         </div>
       </SidebarInset>
@@ -560,37 +559,26 @@ const Analytics = () => {
   )
 }
 
-const getTimeIcon = (time) => {
-  switch (time) {
-    case 'Morning':
-      return Sunrise
-    case 'Afternoon':
-      return Sun
-    case 'Evening':
-      return Sunset
-    case 'Night':
-      return Moon
-    default:
-      return Sun
-  }
-}
-
-const StatCard = ({ icon, label, value }) => (
-  <Card>
-    <CardContent className="pt-6">
-      <div className="flex items-center gap-2 text-muted-foreground mb-2">
-        {icon}
-        <span className="text-sm">{label}</span>
-      </div>
-      <p className="text-2xl font-bold">{value}</p>
-    </CardContent>
-  </Card>
+const InsightRow = ({ label, value, sublabel }) => (
+  <div className="flex items-center justify-between">
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      {sublabel && <p className="text-[10px] text-muted-foreground/70 truncate max-w-[120px]">{sublabel}</p>}
+    </div>
+    <p className="text-sm font-semibold">{value}</p>
+  </div>
 )
 
 const LoadingSkeleton = () => (
   <div className="space-y-6">
     <div className="grid gap-4 md:grid-cols-4">
-      {[1, 2, 3, 4].map((i) => (
+      <Card className="md:col-span-2">
+        <CardContent className="pt-6">
+          <Skeleton className="h-4 w-24 mb-2" />
+          <Skeleton className="h-10 w-40" />
+        </CardContent>
+      </Card>
+      {[1, 2].map((i) => (
         <Card key={i}>
           <CardContent className="pt-6">
             <Skeleton className="h-4 w-24 mb-2" />
@@ -599,15 +587,35 @@ const LoadingSkeleton = () => (
         </Card>
       ))}
     </div>
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-6 w-40" />
-        <Skeleton className="h-4 w-64" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-[300px] w-full" />
-      </CardContent>
-    </Card>
+    <div className="grid gap-6 lg:grid-cols-3">
+      <Card className="lg:col-span-2">
+        <CardHeader>
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-64" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[320px] w-full" />
+        </CardContent>
+      </Card>
+      <div className="space-y-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <Skeleton className="h-4 w-32" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-20 w-full" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <Skeleton className="h-4 w-32" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-20 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   </div>
 )
 
