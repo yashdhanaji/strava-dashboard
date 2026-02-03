@@ -14,7 +14,6 @@ import {
 
 import { AppSidebar } from '@/components/app-sidebar'
 import { TopNavBar } from '@/components/top-navbar'
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -27,6 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Separator } from '@/components/ui/separator'
 
 import {
   Award,
@@ -86,9 +86,9 @@ const Records = () => {
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <div className="min-h-screen bg-[#F8F9FA]">
       <AppSidebar />
-      <SidebarInset>
+      <main className="ml-[88px]">
         <TopNavBar
           title="Personal Records"
           subtitle={`Your all-time bests across ${activities.length} activities`}
@@ -151,13 +151,15 @@ const Records = () => {
                 </div>
 
                 {/* Summary Stats */}
-                <Card>
+                <Card className="rounded-3xl border-0 shadow-sm bg-white">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Trophy className="h-5 w-5 text-yellow-500" />
+                    <CardTitle className="flex items-center gap-3 text-black">
+                      <div className="w-10 h-10 rounded-xl bg-[#EDFD93] flex items-center justify-center">
+                        <Trophy className="h-5 w-5 text-black/70" />
+                      </div>
                       Lifetime Totals
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-[#6B7280]">
                       Your cumulative achievements across all activities
                     </CardDescription>
                   </CardHeader>
@@ -190,13 +192,15 @@ const Records = () => {
 
               {/* Running Records Tab */}
               <TabsContent value="running" className="space-y-6">
-                <Card>
+                <Card className="rounded-3xl border-0 shadow-sm bg-white">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Medal className="h-5 w-5 text-yellow-500" />
+                    <CardTitle className="flex items-center gap-3 text-black">
+                      <div className="w-10 h-10 rounded-xl bg-[#93D6D6] flex items-center justify-center">
+                        <Medal className="h-5 w-5 text-[#2D8A8A]" />
+                      </div>
                       Best Efforts
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-[#6B7280]">
                       Estimated times based on your fastest runs at each distance
                     </CardDescription>
                   </CardHeader>
@@ -228,10 +232,10 @@ const Records = () => {
 
                 {/* Running Stats */}
                 {stats.byType['Run'] && (
-                  <Card>
+                  <Card className="rounded-3xl border-0 shadow-sm bg-white">
                     <CardHeader>
-                      <CardTitle>Running Summary</CardTitle>
-                      <CardDescription>
+                      <CardTitle className="text-black">Running Summary</CardTitle>
+                      <CardDescription className="text-[#6B7280]">
                         Your lifetime running statistics
                       </CardDescription>
                     </CardHeader>
@@ -288,22 +292,22 @@ const Records = () => {
           onClose={() => setSelectedActivity(null)}
           getTypeColor={getTypeColor}
         />
-      </SidebarInset>
-    </SidebarProvider>
+      </main>
+    </div>
   )
 }
 
 const RecordCard = ({ icon, title, activity, value, subtitle, onClick, color, bgColor }) => {
   if (!activity) {
     return (
-      <Card className="opacity-60">
+      <Card className="opacity-60 rounded-3xl border-0 shadow-sm bg-white">
         <CardContent className="p-6">
-          <div className={`inline-flex p-2 rounded-lg ${bgColor} ${color} mb-3`}>
+          <div className={`inline-flex w-12 h-12 items-center justify-center rounded-2xl ${bgColor} ${color} mb-3`}>
             {icon}
           </div>
-          <p className="text-sm text-muted-foreground mb-1">{title}</p>
-          <p className="text-2xl font-bold">N/A</p>
-          {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
+          <p className="text-sm text-[#6B7280] font-medium mb-1">{title}</p>
+          <p className="text-2xl font-bold text-black">N/A</p>
+          {subtitle && <p className="text-xs text-[#6B7280] mt-1">{subtitle}</p>}
         </CardContent>
       </Card>
     )
@@ -311,19 +315,19 @@ const RecordCard = ({ icon, title, activity, value, subtitle, onClick, color, bg
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-shadow"
+      className="cursor-pointer hover:shadow-md transition-shadow rounded-3xl border-0 shadow-sm bg-white"
       onClick={onClick}
     >
       <CardContent className="p-6">
-        <div className={`inline-flex p-2 rounded-lg ${bgColor} ${color} mb-3`}>
+        <div className={`inline-flex w-12 h-12 items-center justify-center rounded-2xl ${bgColor} ${color} mb-3`}>
           {icon}
         </div>
-        <p className="text-sm text-muted-foreground mb-1">{title}</p>
-        <p className="text-2xl font-bold">{value}</p>
-        {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
-        <div className="mt-3 pt-3 border-t">
-          <p className="text-sm font-medium truncate">{activity.name}</p>
-          <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-[#6B7280] font-medium mb-1">{title}</p>
+        <p className="text-2xl font-bold text-black tracking-tight">{value}</p>
+        {subtitle && <p className="text-xs text-[#6B7280] mt-1">{subtitle}</p>}
+        <div className="mt-3 pt-3 border-t border-black/5">
+          <p className="text-sm font-semibold text-black truncate">{activity.name}</p>
+          <p className="text-xs text-[#6B7280]">
             {format(new Date(activity.start_date), 'MMM d, yyyy')}
           </p>
         </div>
@@ -335,12 +339,14 @@ const RecordCard = ({ icon, title, activity, value, subtitle, onClick, color, bg
 const BestEffortCard = ({ distance, activity, onClick }) => {
   if (!activity) {
     return (
-      <Card className="opacity-60">
+      <Card className="opacity-60 rounded-3xl border-0 shadow-sm bg-white">
         <CardContent className="p-6 text-center">
-          <Award className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-          <p className="text-lg font-bold mb-1">{distance}</p>
-          <p className="text-2xl font-bold text-muted-foreground">--:--</p>
-          <p className="text-xs text-muted-foreground mt-2">No qualifying runs</p>
+          <div className="w-14 h-14 rounded-2xl bg-[#F1F3F5] flex items-center justify-center mx-auto mb-3">
+            <Award className="h-7 w-7 text-[#6B7280]" />
+          </div>
+          <p className="text-lg font-bold text-black mb-1">{distance}</p>
+          <p className="text-2xl font-bold text-[#6B7280]">--:--</p>
+          <p className="text-xs text-[#6B7280] mt-2">No qualifying runs</p>
         </CardContent>
       </Card>
     )
@@ -350,17 +356,19 @@ const BestEffortCard = ({ distance, activity, onClick }) => {
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-shadow"
+      className="cursor-pointer hover:shadow-md transition-shadow rounded-3xl border-0 shadow-sm bg-white"
       onClick={onClick}
     >
       <CardContent className="p-6 text-center">
-        <Award className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
-        <p className="text-lg font-bold mb-1">{distance}</p>
-        <p className="text-2xl font-bold">{formatDuration(projectedTime)}</p>
-        <p className="text-xs text-muted-foreground mt-2">
+        <div className="w-14 h-14 rounded-2xl bg-[#EDFD93] flex items-center justify-center mx-auto mb-3">
+          <Award className="h-7 w-7 text-black/70" />
+        </div>
+        <p className="text-lg font-bold text-black mb-1">{distance}</p>
+        <p className="text-2xl font-bold text-black tracking-tight">{formatDuration(projectedTime)}</p>
+        <p className="text-xs text-[#6B7280] mt-2">
           {format(new Date(activity.start_date), 'MMM d, yyyy')}
         </p>
-        <p className="text-xs text-muted-foreground truncate mt-1">
+        <p className="text-xs text-[#6B7280] truncate mt-1">
           {activity.name}
         </p>
       </CardContent>
@@ -370,29 +378,29 @@ const BestEffortCard = ({ distance, activity, onClick }) => {
 
 const ActivityTypeCard = ({ type, stats, getTypeColor }) => {
   return (
-    <Card>
+    <Card className="rounded-3xl border-0 shadow-sm bg-white">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <Badge variant="outline" className={getTypeColor(type)}>
             {type}
           </Badge>
-          <span className="text-2xl font-bold">{stats.count}</span>
+          <span className="text-2xl font-bold text-black">{stats.count}</span>
         </div>
-        <CardDescription>activities</CardDescription>
+        <CardDescription className="text-[#6B7280]">activities</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Distance</span>
-            <span className="font-medium">{formatDistance(stats.distance)}</span>
+            <span className="text-[#6B7280]">Distance</span>
+            <span className="font-semibold text-black">{formatDistance(stats.distance)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Time</span>
-            <span className="font-medium">{formatDuration(stats.time)}</span>
+            <span className="text-[#6B7280]">Time</span>
+            <span className="font-semibold text-black">{formatDuration(stats.time)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Elevation</span>
-            <span className="font-medium">{formatElevation(stats.elevation)}</span>
+            <span className="text-[#6B7280]">Elevation</span>
+            <span className="font-semibold text-black">{formatElevation(stats.elevation)}</span>
           </div>
         </div>
       </CardContent>
@@ -401,11 +409,11 @@ const ActivityTypeCard = ({ type, stats, getTypeColor }) => {
 }
 
 const StatBox = ({ label, value, icon }) => (
-  <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
-    <div className="text-muted-foreground">{icon}</div>
+  <div className="flex items-center gap-3 p-4 rounded-2xl bg-[#F8F9FA]">
+    <div className="text-[#6B7280]">{icon}</div>
     <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-lg font-semibold">{value}</p>
+      <p className="text-xs text-[#6B7280] font-medium">{label}</p>
+      <p className="text-lg font-bold text-black">{value}</p>
     </div>
   </div>
 )
@@ -486,37 +494,37 @@ const ActivityDetailDialog = ({ activity, onClose, getTypeColor }) => {
 }
 
 const StatItem = ({ icon, label, value }) => (
-  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-    {icon && <div className="text-muted-foreground">{icon}</div>}
+  <div className="flex items-center gap-3 p-3 rounded-2xl bg-[#F8F9FA]">
+    {icon && <div className="text-[#6B7280]">{icon}</div>}
     <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-semibold">{value}</p>
+      <p className="text-xs text-[#6B7280]">{label}</p>
+      <p className="text-sm font-semibold text-black">{value}</p>
     </div>
   </div>
 )
 
 const LoadingSkeleton = () => (
   <div className="space-y-6">
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
       {[1, 2, 3, 4].map((i) => (
-        <Card key={i}>
+        <Card key={i} className="rounded-3xl border-0 shadow-sm bg-white">
           <CardContent className="p-6">
-            <Skeleton className="h-10 w-10 rounded-lg mb-3" />
-            <Skeleton className="h-4 w-24 mb-2" />
-            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-12 w-12 rounded-2xl mb-3" />
+            <Skeleton className="h-4 w-24 mb-2 rounded-lg" />
+            <Skeleton className="h-8 w-32 rounded-lg" />
           </CardContent>
         </Card>
       ))}
     </div>
-    <Card>
+    <Card className="rounded-3xl border-0 shadow-sm bg-white">
       <CardHeader>
-        <Skeleton className="h-6 w-40" />
-        <Skeleton className="h-4 w-64" />
+        <Skeleton className="h-6 w-40 rounded-lg" />
+        <Skeleton className="h-4 w-64 rounded-lg" />
       </CardHeader>
       <CardContent>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-20 rounded-lg" />
+            <Skeleton key={i} className="h-20 rounded-2xl" />
           ))}
         </div>
       </CardContent>

@@ -4,7 +4,6 @@ import stravaApi from '@/services/stravaApi'
 
 import { AppSidebar } from '@/components/app-sidebar'
 import { TopNavBar } from '@/components/top-navbar'
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -89,9 +88,9 @@ const Training = () => {
   const currentWeekWorkouts = weekInfo?.currentWeek?.workouts || []
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <div className="min-h-screen bg-[#F8F9FA]">
       <AppSidebar />
-      <SidebarInset>
+      <main className="ml-[88px]">
         <TopNavBar
           title="Training Plan"
           subtitle="AI-powered training insights"
@@ -151,8 +150,8 @@ const Training = () => {
                         ))}
                       </div>
                     ) : (
-                      <Card>
-                        <CardContent className="py-8 text-center text-muted-foreground">
+                      <Card className="rounded-3xl border-0 shadow-sm bg-white">
+                        <CardContent className="py-8 text-center text-[#6B7280]">
                           No workouts scheduled for this week
                         </CardContent>
                       </Card>
@@ -192,10 +191,12 @@ const Training = () => {
                       ))}
                     </div>
                   ) : (
-                    <Card>
+                    <Card className="rounded-3xl border-0 shadow-sm bg-white">
                       <CardContent className="py-12 text-center">
-                        <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                        <p className="text-muted-foreground">
+                        <div className="w-16 h-16 rounded-2xl bg-[#F1F3F5] flex items-center justify-center mx-auto mb-4">
+                          <Calendar className="h-8 w-8 text-[#6B7280]" />
+                        </div>
+                        <p className="text-[#6B7280]">
                           No workouts scheduled for the current week.
                           <br />
                           Check the calendar for upcoming training.
@@ -214,32 +215,32 @@ const Training = () => {
             />
           )}
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+      </main>
+    </div>
   )
 }
 
 const LoadingSkeleton = () => (
   <div className="space-y-6">
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid gap-5 md:grid-cols-3">
       {[1, 2, 3].map((i) => (
-        <Card key={i}>
+        <Card key={i} className="rounded-3xl border-0 shadow-sm bg-white">
           <CardHeader className="pb-2">
-            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-24 rounded-lg" />
           </CardHeader>
           <CardContent>
-            <Skeleton className="h-8 w-32 mb-2" />
-            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-8 w-32 mb-2 rounded-lg" />
+            <Skeleton className="h-3 w-20 rounded-lg" />
           </CardContent>
         </Card>
       ))}
     </div>
-    <Card>
+    <Card className="rounded-3xl border-0 shadow-sm bg-white">
       <CardHeader>
-        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-5 w-32 rounded-lg" />
       </CardHeader>
       <CardContent>
-        <Skeleton className="h-[400px] w-full" />
+        <Skeleton className="h-[400px] w-full rounded-2xl" />
       </CardContent>
     </Card>
   </div>

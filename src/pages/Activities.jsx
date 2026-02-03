@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { subDays } from 'date-fns'
-import { format } from 'date-fns'
+import { subDays, format } from 'date-fns'
 import { useAuth } from '@/contexts/AuthContext'
 import stravaApi from '@/services/stravaApi'
 import { toUnixTimestamp } from '@/utils/dateHelpers'
@@ -8,7 +7,6 @@ import { formatDistance, formatDuration, formatPace, formatSpeed, formatElevatio
 
 import { AppSidebar } from '@/components/app-sidebar'
 import { TopNavBar } from '@/components/top-navbar'
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -29,13 +27,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
 
 import {
   Activity,
   Search,
-  RefreshCw,
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
@@ -51,11 +49,14 @@ import {
   List,
 } from 'lucide-react'
 
-// Default to last 30 days
-const getDefaultDateRange = () => ({
-  start: subDays(new Date(), 30),
-  end: new Date(),
-})
+// Time range mapping (same as Dashboard)
+const TIME_RANGE_DAYS = {
+  '7d': 7,
+  '30d': 30,
+  '90d': 90,
+  '1y': 365,
+  'all': null,
+}
 
 const ITEMS_PER_PAGE = 15
 
@@ -63,22 +64,21 @@ const Activities = () => {
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [activities, setActivities] = useState([])
-  const [dateRange, setDateRange] = useState(getDefaultDateRange)
-  const [selectedTypes, setSelectedTypes] = useState([])
+  const [timeRange, setTimeRange] = useState('30d')
+  const [sportFilter, setSportFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortConfig, setSortConfig] = useState({ key: 'start_date', direction: 'desc' })
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedActivity, setSelectedActivity] = useState(null)
   const [viewMode, setViewMode] = useState('table')
 
-  // Load activities when date range changes
+  // Load activities when time range changes
   const loadActivities = useCallback(async () => {
-    if (!dateRange?.start || !dateRange?.end) return
-
     setLoading(true)
     try {
-      const after = toUnixTimestamp(dateRange.start)
-      const before = toUnixTimestamp(dateRange.end)
+      const days = TIME_RANGE_DAYS[timeRange]
+      const after = days ? toUnixTimestamp(subDays(new Date(), days)) : null
+      const before = toUnixTimestamp(new Date())
 
       const data = await stravaApi.getAllActivities(after, before, (count) => {
         console.log(`Loaded ${count} activities...`)
@@ -91,24 +91,19 @@ const Activities = () => {
     } finally {
       setLoading(false)
     }
-  }, [dateRange])
+  }, [timeRange])
 
   useEffect(() => {
     loadActivities()
   }, [loadActivities])
 
-  // Get unique activity types
-  const activityTypes = useMemo(() => {
-    return [...new Set(activities.map((a) => a.type))]
-  }, [activities])
-
   // Filter and sort activities
   const filteredActivities = useMemo(() => {
     let filtered = activities
 
-    // Filter by type
-    if (selectedTypes.length > 0) {
-      filtered = filtered.filter((activity) => selectedTypes.includes(activity.type))
+    // Filter by sport type from TopNavBar
+    if (sportFilter !== 'all') {
+      filtered = filtered.filter((activity) => activity.type === sportFilter)
     }
 
     // Filter by search query
@@ -137,7 +132,7 @@ const Activities = () => {
     })
 
     return filtered
-  }, [activities, selectedTypes, searchQuery, sortConfig])
+  }, [activities, sportFilter, searchQuery, sortConfig])
 
   // Pagination
   const totalPages = Math.ceil(filteredActivities.length / ITEMS_PER_PAGE)
@@ -177,97 +172,59 @@ const Activities = () => {
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <div className="min-h-screen bg-[#F8F9FA]">
       <AppSidebar />
-      <SidebarInset>
+      <main className="ml-[88px]">
         <TopNavBar
           title="Activities"
           subtitle={`${filteredActivities.length} activities found`}
-          showFilters={false}
+          timeRange={timeRange}
+          onTimeRangeChange={setTimeRange}
+          sportFilter={sportFilter}
+          onSportFilterChange={setSportFilter}
         />
 
         {/* Main Content */}
         <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-          {/* Filters Row */}
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              {/* Date Range Picker */}
-              <DateRangePicker
-                dateRange={dateRange}
-                onDateRangeChange={setDateRange}
+          {/* Search and View Toggle */}
+          <div className="flex items-center justify-between">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search activities..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="pl-9 w-[250px] rounded-xl"
               />
-
-              {/* Search and View Toggle */}
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Search activities..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value)
-                      setCurrentPage(1)
-                    }}
-                    className="pl-9 w-[200px]"
-                  />
-                </div>
-                <Tabs value={viewMode} onValueChange={setViewMode}>
-                  <TabsList className="h-9">
-                    <TabsTrigger value="table" className="px-2">
-                      <List className="h-4 w-4" />
-                    </TabsTrigger>
-                    <TabsTrigger value="grid" className="px-2">
-                      <LayoutGrid className="h-4 w-4" />
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
             </div>
-
-            {/* Activity Type Filters */}
-            {activityTypes.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm text-muted-foreground">Filter by type:</span>
-                {activityTypes.map((type) => (
-                  <Badge
-                    key={type}
-                    variant={selectedTypes.includes(type) ? "default" : "outline"}
-                    className="cursor-pointer transition-colors"
-                    onClick={() => {
-                      if (selectedTypes.includes(type)) {
-                        setSelectedTypes(selectedTypes.filter((t) => t !== type))
-                      } else {
-                        setSelectedTypes([...selectedTypes, type])
-                      }
-                      setCurrentPage(1)
-                    }}
-                  >
-                    {type}
-                  </Badge>
-                ))}
-                {selectedTypes.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={() => {
-                    setSelectedTypes([])
-                    setCurrentPage(1)
-                  }}>
-                    Clear
-                  </Button>
-                )}
-              </div>
-            )}
+            <Tabs value={viewMode} onValueChange={setViewMode}>
+              <TabsList className="h-9 rounded-xl">
+                <TabsTrigger value="table" className="px-3 rounded-lg">
+                  <List className="h-4 w-4" />
+                </TabsTrigger>
+                <TabsTrigger value="grid" className="px-3 rounded-lg">
+                  <LayoutGrid className="h-4 w-4" />
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
 
           {loading ? (
             <LoadingSkeleton />
           ) : filteredActivities.length === 0 ? (
-            <Card className="flex flex-col items-center justify-center py-12">
-              <Activity className="h-12 w-12 text-muted-foreground mb-4" />
-              <CardTitle className="mb-2">No activities found</CardTitle>
-              <CardDescription>Try adjusting your date range or filters</CardDescription>
+            <Card className="flex flex-col items-center justify-center py-16 rounded-3xl border-0 shadow-sm bg-white">
+              <div className="w-16 h-16 rounded-2xl bg-[#F1F3F5] flex items-center justify-center mb-4">
+                <Activity className="h-8 w-8 text-[#6B7280]" />
+              </div>
+              <CardTitle className="mb-2 text-black">No activities found</CardTitle>
+              <CardDescription className="text-[#6B7280]">Try adjusting your date range or filters</CardDescription>
             </Card>
           ) : viewMode === 'table' ? (
             /* Table View */
-            <Card>
+            <Card className="rounded-3xl border-0 shadow-sm bg-white overflow-hidden">
               <CardContent className="p-0">
                 <ScrollArea className="w-full">
                   <Table>
@@ -444,46 +401,54 @@ const Activities = () => {
           onClose={() => setSelectedActivity(null)}
           getTypeColor={getTypeColor}
         />
-      </SidebarInset>
-    </SidebarProvider>
+      </main>
+    </div>
   )
 }
 
 const ActivityCard = ({ activity, onClick, getTypeColor }) => {
   return (
-    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+    <Card className="cursor-pointer hover:shadow-md transition-shadow rounded-3xl border-0 shadow-sm bg-white" onClick={onClick}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <Badge variant="outline" className={getTypeColor(activity.type)}>
             {activity.type}
           </Badge>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-[#6B7280]">
             {format(new Date(activity.start_date), 'MMM d, yyyy')}
           </span>
         </div>
-        <CardTitle className="text-base truncate">{activity.name}</CardTitle>
+        <CardTitle className="text-base truncate text-black">{activity.name}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-3">
           <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">{formatDistance(activity.distance)}</span>
+            <div className="w-8 h-8 rounded-xl bg-[#EDFD93]/30 flex items-center justify-center">
+              <MapPin className="h-4 w-4 text-[#6B8E23]" />
+            </div>
+            <span className="text-sm font-semibold text-black">{formatDistance(activity.distance)}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">{formatDuration(activity.moving_time)}</span>
+            <div className="w-8 h-8 rounded-xl bg-[#93D6D6]/30 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-[#2D8A8A]" />
+            </div>
+            <span className="text-sm font-semibold text-black">{formatDuration(activity.moving_time)}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Zap className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">
+            <div className="w-8 h-8 rounded-xl bg-[#CBE1D6]/40 flex items-center justify-center">
+              <Zap className="h-4 w-4 text-[#3D7A5C]" />
+            </div>
+            <span className="text-sm font-semibold text-black">
               {activity.type === 'Run' || activity.type === 'Walk' || activity.type === 'Hike'
                 ? formatPace(activity.average_speed)
                 : formatSpeed(activity.average_speed)}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">{formatElevation(activity.total_elevation_gain)}</span>
+            <div className="w-8 h-8 rounded-xl bg-[#C8CEE1]/40 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-[#5B6494]" />
+            </div>
+            <span className="text-sm font-semibold text-black">{formatElevation(activity.total_elevation_gain)}</span>
           </div>
         </div>
       </CardContent>
@@ -580,26 +545,26 @@ const ActivityDetailDialog = ({ activity, onClose, getTypeColor }) => {
 }
 
 const StatItem = ({ icon, label, value }) => (
-  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-    {icon && <div className="text-muted-foreground">{icon}</div>}
+  <div className="flex items-center gap-3 p-3 rounded-2xl bg-[#F8F9FA]">
+    {icon && <div className="text-[#6B7280]">{icon}</div>}
     <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-semibold">{value}</p>
+      <p className="text-xs text-[#6B7280]">{label}</p>
+      <p className="text-sm font-semibold text-black">{value}</p>
     </div>
   </div>
 )
 
 const LoadingSkeleton = () => (
-  <Card>
+  <Card className="rounded-3xl border-0 shadow-sm bg-white">
     <CardContent className="p-6">
       <div className="space-y-4">
         {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
           <div key={i} className="flex items-center gap-4">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-4 w-48 flex-1" />
+            <Skeleton className="h-4 w-24 rounded-lg" />
+            <Skeleton className="h-4 w-48 flex-1 rounded-lg" />
             <Skeleton className="h-6 w-16 rounded-full" />
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-20 rounded-lg" />
+            <Skeleton className="h-4 w-16 rounded-lg" />
           </div>
         ))}
       </div>

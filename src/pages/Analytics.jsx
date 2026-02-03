@@ -18,7 +18,6 @@ import {
 
 import { AppSidebar } from '@/components/app-sidebar'
 import { TopNavBar } from '@/components/top-navbar'
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -188,10 +187,12 @@ const Analytics = () => {
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <div className="min-h-screen bg-[#F8F9FA]">
       <AppSidebar />
-      <SidebarInset>
+      <main className="ml-[88px]">
         <TopNavBar
+          title="Analytics"
+          subtitle="Deep dive into your performance"
           timeRange={timeRange}
           onTimeRangeChange={setTimeRange}
           sportFilter={selectedType}
@@ -203,33 +204,35 @@ const Analytics = () => {
           {loading ? (
             <LoadingSkeleton />
           ) : filteredActivities.length === 0 ? (
-            <Card className="flex flex-col items-center justify-center py-12">
-              <Activity className="h-12 w-12 text-muted-foreground mb-4" />
-              <CardTitle className="mb-2">No data to analyze</CardTitle>
-              <CardDescription>Try adjusting your time range or filters</CardDescription>
+            <Card className="flex flex-col items-center justify-center py-16 rounded-3xl border-0 shadow-sm bg-white">
+              <div className="w-16 h-16 rounded-2xl bg-[#F1F3F5] flex items-center justify-center mb-4">
+                <Activity className="h-8 w-8 text-[#6B7280]" />
+              </div>
+              <CardTitle className="mb-2 text-black">No data to analyze</CardTitle>
+              <CardDescription className="text-[#6B7280]">Try adjusting your time range or filters</CardDescription>
             </Card>
           ) : (
             <>
               {/* Section 1: High-Level Summary */}
-              <div className="grid gap-4 md:grid-cols-4">
+              <div className="grid gap-5 md:grid-cols-4">
                 {/* Primary Metric - Total Distance */}
-                <Card className="md:col-span-2 bg-gradient-to-br from-primary to-primary/80">
+                <Card className="md:col-span-2 rounded-3xl border-0 shadow-sm bg-[#EDFD93]">
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-sm font-medium text-primary-foreground/70">Total Distance</p>
-                        <p className="text-4xl font-bold text-primary-foreground mt-1">
+                        <p className="text-sm font-semibold text-black/60">Total Distance</p>
+                        <p className="text-4xl font-bold text-black tracking-tight mt-1">
                           {formatDistance(stats.totalDistance)}
                         </p>
-                        <p className="text-sm text-primary-foreground/60 mt-1">
+                        <p className="text-sm text-black/50 font-medium mt-1">
                           {stats.totalActivities} activities
                         </p>
                       </div>
                       {periodComparison && (
-                        <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                        <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold ${
                           periodComparison.isPositive
-                            ? 'bg-green-500/20 text-green-100'
-                            : 'bg-red-500/20 text-red-100'
+                            ? 'bg-black/10 text-black/70'
+                            : 'bg-red-500/20 text-red-700'
                         }`}>
                           {periodComparison.isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                           {Math.abs(periodComparison.change).toFixed(1)}%
@@ -240,27 +243,33 @@ const Analytics = () => {
                 </Card>
 
                 {/* KPI Cards */}
-                <Card>
+                <Card className="relative overflow-hidden rounded-3xl border-0 shadow-sm bg-white">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-[#93D6D6]/20 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <CardContent className="pt-6">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <Clock className="h-4 w-4" />
-                      <span className="text-xs font-medium">Total Time</span>
+                    <div className="flex items-center gap-2 text-[#6B7280] mb-1">
+                      <div className="w-8 h-8 rounded-xl bg-[#93D6D6]/30 flex items-center justify-center">
+                        <Clock className="h-4 w-4 text-[#2D8A8A]" />
+                      </div>
+                      <span className="text-xs font-semibold">Total Time</span>
                     </div>
-                    <p className="text-2xl font-bold">{formatDuration(stats.totalTime)}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-2xl font-bold text-black tracking-tight">{formatDuration(stats.totalTime)}</p>
+                    <p className="text-xs text-[#6B7280] font-medium mt-1">
                       Avg {formatDuration(stats.totalTime / stats.totalActivities)} per activity
                     </p>
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="relative overflow-hidden rounded-3xl border-0 shadow-sm bg-white">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-[#C8CEE1]/30 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <CardContent className="pt-6">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <Mountain className="h-4 w-4" />
-                      <span className="text-xs font-medium">Elevation Gain</span>
+                    <div className="flex items-center gap-2 text-[#6B7280] mb-1">
+                      <div className="w-8 h-8 rounded-xl bg-[#C8CEE1]/40 flex items-center justify-center">
+                        <Mountain className="h-4 w-4 text-[#5B6494]" />
+                      </div>
+                      <span className="text-xs font-semibold">Elevation Gain</span>
                     </div>
-                    <p className="text-2xl font-bold">{Math.round(stats.totalElevation).toLocaleString()}m</p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-2xl font-bold text-black tracking-tight">{Math.round(stats.totalElevation).toLocaleString()}m</p>
+                    <p className="text-xs text-[#6B7280] font-medium mt-1">
                       Avg {Math.round(stats.totalElevation / stats.totalActivities)}m per activity
                     </p>
                   </CardContent>
@@ -270,12 +279,12 @@ const Analytics = () => {
               {/* Section 2: Main Visualization + Insights Panel */}
               <div className="grid gap-6 lg:grid-cols-3">
                 {/* Primary Zone - Main Chart */}
-                <Card className="lg:col-span-2">
+                <Card className="lg:col-span-2 rounded-3xl border-0 shadow-sm bg-white">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <div>
-                        <CardTitle className="text-lg">Performance Trend</CardTitle>
-                        <CardDescription>Weekly distance over time</CardDescription>
+                        <CardTitle className="text-lg font-bold text-black">Performance Trend</CardTitle>
+                        <CardDescription className="text-[#6B7280]">Weekly distance over time</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
@@ -319,10 +328,12 @@ const Analytics = () => {
                 {/* Secondary Panel - Insights */}
                 <div className="space-y-4">
                   {/* Best Performers */}
-                  <Card>
+                  <Card className="rounded-3xl border-0 shadow-sm bg-white">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <Trophy className="h-4 w-4 text-yellow-500" />
+                      <CardTitle className="text-sm font-semibold flex items-center gap-2 text-black">
+                        <div className="w-8 h-8 rounded-xl bg-[#EDFD93] flex items-center justify-center">
+                          <Trophy className="h-4 w-4 text-black/70" />
+                        </div>
                         Top Performances
                       </CardTitle>
                     </CardHeader>
@@ -352,10 +363,12 @@ const Analytics = () => {
                   </Card>
 
                   {/* Quick Stats */}
-                  <Card>
+                  <Card className="rounded-3xl border-0 shadow-sm bg-white">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-primary" />
+                      <CardTitle className="text-sm font-semibold flex items-center gap-2 text-black">
+                        <div className="w-8 h-8 rounded-xl bg-[#93D6D6] flex items-center justify-center">
+                          <Zap className="h-4 w-4 text-[#2D8A8A]" />
+                        </div>
                         Quick Stats
                       </CardTitle>
                     </CardHeader>
@@ -379,10 +392,12 @@ const Analytics = () => {
                   </Card>
 
                   {/* Recent Activity */}
-                  <Card>
+                  <Card className="rounded-3xl border-0 shadow-sm bg-white">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <CardTitle className="text-sm font-semibold flex items-center gap-2 text-black">
+                        <div className="w-8 h-8 rounded-xl bg-[#C8CEE1] flex items-center justify-center">
+                          <Calendar className="h-4 w-4 text-[#5B6494]" />
+                        </div>
                         Recent
                       </CardTitle>
                     </CardHeader>
@@ -410,10 +425,10 @@ const Analytics = () => {
               <div className="grid gap-6 md:grid-cols-2">
                 {/* Monthly Breakdown */}
                 {monthlyData.length > 1 && (
-                  <Card>
+                  <Card className="rounded-3xl border-0 shadow-sm bg-white">
                     <CardHeader>
-                      <CardTitle className="text-base">Monthly Breakdown</CardTitle>
-                      <CardDescription>Distance by month</CardDescription>
+                      <CardTitle className="text-base font-bold text-black">Monthly Breakdown</CardTitle>
+                      <CardDescription className="text-[#6B7280]">Distance by month</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <ChartContainer config={chartConfig} className="h-[200px] w-full">
@@ -442,10 +457,10 @@ const Analytics = () => {
                 )}
 
                 {/* Activity by Day of Week */}
-                <Card>
+                <Card className="rounded-3xl border-0 shadow-sm bg-white">
                   <CardHeader>
-                    <CardTitle className="text-base">Weekly Pattern</CardTitle>
-                    <CardDescription>When you're most active</CardDescription>
+                    <CardTitle className="text-base font-bold text-black">Weekly Pattern</CardTitle>
+                    <CardDescription className="text-[#6B7280]">When you're most active</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ChartContainer config={chartConfig} className="h-[200px] w-full">
@@ -475,10 +490,10 @@ const Analytics = () => {
 
               {/* Section 4: Activity Type Breakdown */}
               {Object.keys(stats.byType).length > 1 && (
-                <Card>
+                <Card className="rounded-3xl border-0 shadow-sm bg-white">
                   <CardHeader>
-                    <CardTitle className="text-base">Activity Breakdown</CardTitle>
-                    <CardDescription>Stats by activity type</CardDescription>
+                    <CardTitle className="text-base font-bold text-black">Activity Breakdown</CardTitle>
+                    <CardDescription className="text-[#6B7280]">Stats by activity type</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -516,10 +531,10 @@ const Analytics = () => {
               )}
 
               {/* Section 5: Top Activities List */}
-              <Card>
+              <Card className="rounded-3xl border-0 shadow-sm bg-white">
                 <CardHeader>
-                  <CardTitle className="text-base">Top Activities</CardTitle>
-                  <CardDescription>Your longest activities this period</CardDescription>
+                  <CardTitle className="text-base font-bold text-black">Top Activities</CardTitle>
+                  <CardDescription className="text-[#6B7280]">Your longest activities this period</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
@@ -554,8 +569,8 @@ const Analytics = () => {
             </>
           )}
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+      </main>
+    </div>
   )
 }
 

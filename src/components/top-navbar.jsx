@@ -1,6 +1,6 @@
-import { Bell, ChevronDown, LogOut, Settings } from "lucide-react"
+import { Bell, ChevronDown, LogOut, Settings, Search } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -38,6 +38,7 @@ export function TopNavBar({
 }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const handleLogout = () => {
     logout()
@@ -45,116 +46,149 @@ export function TopNavBar({
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center bg-transparent px-6">
-      {/* Left: App Logo */}
-      <div className="flex items-center gap-3 min-w-fit">
-        <img
-          src="/logo.png"
-          alt="Muscle and Miles"
-          className="w-10 h-10 rounded-full object-cover"
-        />
-        <div className="flex flex-col">
-          <span className="text-base font-bold text-gray-800 leading-tight">Muscle and Miles</span>
-          <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">Athletic Club</span>
-        </div>
-      </div>
-
-      {/* Center: Title + Filters */}
-      <div className="flex-1 flex items-center justify-center gap-6">
-        {(title || subtitle) && (
-          <div className="text-center">
-            {title && <h1 className="text-base font-semibold text-gray-800">{title}</h1>}
-            {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
-          </div>
-        )}
-
-        {/* Quick Filters */}
-        {showFilters && (
-          <div className="hidden md:flex items-center gap-1">
-            {/* Time Range Quick Filters */}
-            {onTimeRangeChange && (
-              <div className="flex items-center bg-white/50 rounded-full p-0.5 border border-gray-200/50">
-                {QUICK_TIME_FILTERS.map((filter) => (
-                  <button
-                    key={filter.value}
-                    onClick={() => onTimeRangeChange(filter.value)}
-                    className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
-                      timeRange === filter.value
-                        ? 'bg-gray-900 text-white'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Divider */}
-            {onSportFilterChange && <div className="w-px h-4 bg-gray-200/50 mx-2" />}
-
-            {/* Sport Quick Filters */}
-            {onSportFilterChange && (
-              <div className="flex items-center gap-1">
-                {QUICK_SPORT_FILTERS.map((filter) => (
-                  <button
-                    key={filter.value}
-                    onClick={() => onSportFilterChange(filter.value)}
-                    className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
-                      sportFilter === filter.value
-                        ? 'bg-primary/10 text-primary border border-primary/20'
-                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
-                    }`}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Right: User Actions */}
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="h-10 w-10 text-gray-400 hover:text-gray-600 hover:bg-transparent">
-          <Bell className="h-5 w-5" />
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-10 gap-2 px-3 hover:bg-transparent">
-              <Avatar className="h-8 w-8 border border-white/60">
-                <AvatarImage src={user?.profile} alt={user?.firstname} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                  {user?.firstname?.[0] || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm font-medium text-gray-700">
-                {user?.firstname}
-              </span>
-              <ChevronDown className="h-3 w-3 text-gray-400" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <div className="px-2 py-1.5">
-              <p className="text-sm font-medium">{user?.firstname} {user?.lastname}</p>
-              <p className="text-xs text-muted-foreground">
-                {user?.city ? `${user.city}, ${user.country}` : "Athlete"}
-              </p>
+    <header className="sticky top-0 z-30 bg-white border-b border-black/5">
+      <div className="flex h-16 items-center justify-between px-6">
+        {/* Left: Section Context */}
+        <div className="flex items-center gap-4 min-w-[200px]">
+          {(title || subtitle) && (
+            <div>
+              {title && (
+                <h1 className="text-lg font-bold text-black tracking-tight">{title}</h1>
+              )}
+              {subtitle && (
+                <p className="text-xs text-[#6B7280] font-medium">{subtitle}</p>
+              )}
             </div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/settings')} className="text-xs">
-              <Settings className="mr-2 h-3.5 w-3.5" />
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-xs text-red-600">
-              <LogOut className="mr-2 h-3.5 w-3.5" />
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          )}
+        </div>
+
+        {/* Center: Pill-Style Filter Tabs */}
+        {showFilters && (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="flex items-center gap-2">
+              {/* Time Range Pills */}
+              {onTimeRangeChange && (
+                <div className="flex items-center bg-[#F1F3F5] rounded-2xl p-1">
+                  {QUICK_TIME_FILTERS.map((filter) => (
+                    <button
+                      key={filter.value}
+                      onClick={() => onTimeRangeChange(filter.value)}
+                      className={`px-4 py-2 text-[13px] font-semibold rounded-xl transition-all duration-200 ${
+                        timeRange === filter.value
+                          ? 'bg-black text-white shadow-sm'
+                          : 'text-[#6B7280] hover:text-black'
+                      }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Divider */}
+              {onTimeRangeChange && onSportFilterChange && (
+                <div className="w-px h-8 bg-[#E5E7EB] mx-2" />
+              )}
+
+              {/* Sport Filter Pills */}
+              {onSportFilterChange && (
+                <div className="flex items-center gap-1">
+                  {QUICK_SPORT_FILTERS.map((filter) => (
+                    <button
+                      key={filter.value}
+                      onClick={() => onSportFilterChange(filter.value)}
+                      className={`px-4 py-2 text-[13px] font-semibold rounded-xl transition-all duration-200 ${
+                        sportFilter === filter.value
+                          ? 'bg-[#EDFD93] text-black'
+                          : 'text-[#6B7280] hover:text-black hover:bg-[#F1F3F5]'
+                      }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Spacer when no filters */}
+        {!showFilters && <div className="flex-1" />}
+
+        {/* Right: Global Actions & User Controls */}
+        <div className="flex items-center gap-3 min-w-[200px] justify-end">
+          {/* Search Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 rounded-xl text-[#6B7280] hover:text-black hover:bg-[#F1F3F5]"
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+
+          {/* Notifications */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 rounded-xl text-[#6B7280] hover:text-black hover:bg-[#F1F3F5] relative"
+          >
+            <Bell className="h-5 w-5" />
+            <span className="absolute top-2 right-2 w-2 h-2 bg-[#EDFD93] rounded-full border-2 border-white" />
+          </Button>
+
+          {/* Divider */}
+          <div className="w-px h-8 bg-[#E5E7EB]" />
+
+          {/* User Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-10 gap-3 px-3 rounded-xl hover:bg-[#F1F3F5] focus-visible:ring-0"
+              >
+                <Avatar className="h-8 w-8 rounded-xl">
+                  <AvatarImage src={user?.profile} alt={user?.firstname} />
+                  <AvatarFallback className="bg-black text-white text-xs font-semibold rounded-xl">
+                    {user?.firstname?.[0] || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden sm:flex flex-col items-start">
+                  <span className="text-[13px] font-semibold text-black leading-tight">
+                    {user?.firstname}
+                  </span>
+                  <span className="text-[11px] text-[#6B7280] leading-tight">
+                    Athlete
+                  </span>
+                </div>
+                <ChevronDown className="h-4 w-4 text-[#6B7280]" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2">
+              <div className="px-3 py-3 mb-1">
+                <p className="text-sm font-bold text-black">{user?.firstname} {user?.lastname}</p>
+                <p className="text-xs text-[#6B7280]">
+                  {user?.city ? `${user.city}, ${user.country}` : "Strava Athlete"}
+                </p>
+              </div>
+              <DropdownMenuSeparator className="bg-[#F1F3F5]" />
+              <DropdownMenuItem
+                onClick={() => navigate('/settings')}
+                className="rounded-xl py-2.5 px-3 text-[13px] font-medium cursor-pointer focus:bg-[#F1F3F5]"
+              >
+                <Settings className="mr-3 h-4 w-4 text-[#6B7280]" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-[#F1F3F5]" />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="rounded-xl py-2.5 px-3 text-[13px] font-medium text-red-600 cursor-pointer focus:bg-red-50 focus:text-red-600"
+              >
+                <LogOut className="mr-3 h-4 w-4" />
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   )

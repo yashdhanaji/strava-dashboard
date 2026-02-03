@@ -4,12 +4,12 @@ import { useNavigate } from 'react-router-dom'
 
 import { AppSidebar } from '@/components/app-sidebar'
 import { TopNavBar } from '@/components/top-navbar'
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Separator } from '@/components/ui/separator'
 import {
   Select,
   SelectContent,
@@ -102,9 +102,9 @@ const Settings = () => {
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <div className="min-h-screen bg-[#F8F9FA]">
       <AppSidebar />
-      <SidebarInset>
+      <main className="ml-[88px]">
         <TopNavBar
           title="Settings"
           subtitle="Manage your preferences"
@@ -114,38 +114,40 @@ const Settings = () => {
         {/* Main Content */}
         <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 max-w-3xl">
           {/* Profile Section */}
-          <Card>
+          <Card className="rounded-3xl border-0 shadow-sm bg-white">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-3 text-black">
+                <div className="w-10 h-10 rounded-xl bg-[#EDFD93] flex items-center justify-center">
+                  <User className="h-5 w-5 text-black/70" />
+                </div>
                 Profile
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-[#6B7280]">
                 Your Strava account information
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16">
+                <Avatar className="h-16 w-16 rounded-2xl">
                   <AvatarImage src={user?.profile} alt={user?.firstname} />
-                  <AvatarFallback className="text-lg">
+                  <AvatarFallback className="text-lg rounded-2xl bg-[#F1F3F5] text-black">
                     {user?.firstname?.[0]}{user?.lastname?.[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold">
+                  <h3 className="text-lg font-bold text-black">
                     {user?.firstname} {user?.lastname}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-[#6B7280]">
                     {user?.city && user?.country
                       ? `${user.city}, ${user.country}`
                       : 'Location not set'}
                   </p>
                   {user?.bio && (
-                    <p className="text-sm text-muted-foreground mt-1">{user.bio}</p>
+                    <p className="text-sm text-[#6B7280] mt-1">{user.bio}</p>
                   )}
                 </div>
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" size="sm" className="rounded-xl" asChild>
                   <a
                     href={`https://www.strava.com/athletes/${user?.id}`}
                     target="_blank"
@@ -160,13 +162,15 @@ const Settings = () => {
           </Card>
 
           {/* Display Preferences */}
-          <Card>
+          <Card className="rounded-3xl border-0 shadow-sm bg-white">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Palette className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-3 text-black">
+                <div className="w-10 h-10 rounded-xl bg-[#93D6D6] flex items-center justify-center">
+                  <Palette className="h-5 w-5 text-[#2D8A8A]" />
+                </div>
                 Display Preferences
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-[#6B7280]">
                 Customize how data is displayed
               </CardDescription>
             </CardHeader>
@@ -261,13 +265,15 @@ const Settings = () => {
           </Card>
 
           {/* Data & Storage */}
-          <Card>
+          <Card className="rounded-3xl border-0 shadow-sm bg-white">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-3 text-black">
+                <div className="w-10 h-10 rounded-xl bg-[#CBE1D6] flex items-center justify-center">
+                  <Database className="h-5 w-5 text-[#3D7A5C]" />
+                </div>
                 Data & Storage
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-[#6B7280]">
                 Manage cached data and sync preferences
               </CardDescription>
             </CardHeader>
@@ -326,13 +332,15 @@ const Settings = () => {
           </Card>
 
           {/* Account Actions */}
-          <Card>
+          <Card className="rounded-3xl border-0 shadow-sm bg-white">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <SettingsIcon className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-3 text-black">
+                <div className="w-10 h-10 rounded-xl bg-[#C8CEE1] flex items-center justify-center">
+                  <SettingsIcon className="h-5 w-5 text-[#5B6494]" />
+                </div>
                 Account
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-[#6B7280]">
                 Manage your account and data
               </CardDescription>
             </CardHeader>
@@ -394,15 +402,17 @@ const Settings = () => {
           </Card>
 
           {/* App Info */}
-          <Card>
+          <Card className="rounded-3xl border-0 shadow-sm bg-white">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-3 text-black">
+                <div className="w-10 h-10 rounded-xl bg-[#F1F3F5] flex items-center justify-center">
+                  <Globe className="h-5 w-5 text-[#6B7280]" />
+                </div>
                 About
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 text-sm text-muted-foreground">
+              <div className="space-y-2 text-sm text-[#6B7280]">
                 <p><strong>Strava Dashboard</strong> v1.0.0</p>
                 <p>
                   Built with React, Vite, and shadcn/ui.
@@ -430,8 +440,8 @@ const Settings = () => {
             </CardContent>
           </Card>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+      </main>
+    </div>
   )
 }
 

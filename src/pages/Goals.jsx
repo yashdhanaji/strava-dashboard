@@ -12,7 +12,6 @@ import {
 
 import { AppSidebar } from '@/components/app-sidebar'
 import { TopNavBar } from '@/components/top-navbar'
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -231,9 +230,9 @@ const Goals = () => {
   }, [goals, calculateProgress])
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <div className="min-h-screen bg-[#F8F9FA]">
       <AppSidebar />
-      <SidebarInset>
+      <main className="ml-[88px]">
         <TopNavBar
           title="Goals"
           subtitle="Track your fitness targets"
@@ -247,24 +246,24 @@ const Goals = () => {
           ) : (
             <>
               {/* Overview Card */}
-              <Card className="bg-gradient-to-br from-primary to-primary/80">
+              <Card className="rounded-3xl border-0 shadow-sm bg-[#EDFD93]">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-primary-foreground/80">Goals Completed</p>
-                      <p className="text-4xl font-bold text-primary-foreground">
+                      <p className="text-sm font-semibold text-black/60">Goals Completed</p>
+                      <p className="text-4xl font-bold text-black tracking-tight">
                         {overallStats.completed}/{overallStats.total}
                       </p>
                     </div>
-                    <div className="h-20 w-20 rounded-full border-4 border-primary-foreground/20 flex items-center justify-center">
-                      <span className="text-2xl font-bold text-primary-foreground">
+                    <div className="h-20 w-20 rounded-full border-4 border-black/10 flex items-center justify-center bg-white/50">
+                      <span className="text-2xl font-bold text-black">
                         {overallStats.percentage.toFixed(0)}%
                       </span>
                     </div>
                   </div>
                   <Progress
                     value={overallStats.percentage}
-                    className="mt-4 h-2 bg-primary-foreground/20"
+                    className="mt-4 h-2 bg-black/10"
                   />
                 </CardContent>
               </Card>
@@ -307,10 +306,12 @@ const Goals = () => {
                 {GOAL_PERIODS.map((period) => (
                   <TabsContent key={period.value} value={period.value} className="space-y-4">
                     {goalsByPeriod[period.value].length === 0 ? (
-                      <Card className="flex flex-col items-center justify-center py-12">
-                        <Target className="h-12 w-12 text-muted-foreground mb-4" />
-                        <CardTitle className="mb-2">No {period.label} Goals</CardTitle>
-                        <CardDescription className="mb-4">
+                      <Card className="flex flex-col items-center justify-center py-16 rounded-3xl border-0 shadow-sm bg-white">
+                        <div className="w-16 h-16 rounded-2xl bg-[#F1F3F5] flex items-center justify-center mb-4">
+                          <Target className="h-8 w-8 text-[#6B7280]" />
+                        </div>
+                        <CardTitle className="mb-2 text-black">No {period.label} Goals</CardTitle>
+                        <CardDescription className="mb-4 text-[#6B7280]">
                           Set a target to track your progress
                         </CardDescription>
                         <GoalDialog
@@ -378,8 +379,8 @@ const Goals = () => {
             isEditing
           />
         )}
-      </SidebarInset>
-    </SidebarProvider>
+      </main>
+    </div>
   )
 }
 
@@ -401,19 +402,19 @@ const GoalCard = ({ goal, progress, onEdit, onDelete }) => {
   }
 
   return (
-    <Card className={progress.isCompleted ? 'border-green-500 bg-green-50/50' : ''}>
+    <Card className={`rounded-3xl border-0 shadow-sm ${progress.isCompleted ? 'bg-[#CBE1D6]/30' : 'bg-white'}`}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <div
-              className={`p-2 rounded-lg ${
-                progress.isCompleted ? 'bg-green-100 text-green-600' : 'bg-primary/10 text-primary'
+              className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                progress.isCompleted ? 'bg-[#CBE1D6] text-[#3D7A5C]' : 'bg-[#EDFD93] text-black/70'
               }`}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-5 w-5" />
             </div>
             <div>
-              <CardTitle className="text-base">
+              <CardTitle className="text-base text-black">
                 {goalType?.label || goal.type}
                 {goal.activityType && goal.activityType !== 'all' && (
                   <Badge variant="outline" className="ml-2 text-xs">
@@ -421,33 +422,37 @@ const GoalCard = ({ goal, progress, onEdit, onDelete }) => {
                   </Badge>
                 )}
               </CardTitle>
-              <CardDescription className="capitalize">{goal.period}</CardDescription>
+              <CardDescription className="capitalize text-[#6B7280]">{goal.period}</CardDescription>
             </div>
           </div>
-          {progress.isCompleted && <Check className="h-5 w-5 text-green-600" />}
+          {progress.isCompleted && (
+            <div className="w-8 h-8 rounded-full bg-[#3D7A5C] flex items-center justify-center">
+              <Check className="h-4 w-4 text-white" />
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
           <div className="flex items-end justify-between">
-            <span className="text-3xl font-bold">
+            <span className="text-3xl font-bold text-black tracking-tight">
               {formatValue(progress.current, goal.type)}
             </span>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-[#6B7280] font-medium">
               / {formatValue(goal.target, goal.type)}
             </span>
           </div>
           <Progress value={progress.percentage} className="h-2" />
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">{progress.percentage.toFixed(0)}% complete</span>
+            <span className="text-[#6B7280]">{progress.percentage.toFixed(0)}% complete</span>
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={onEdit}>
                 <Edit2 className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-destructive"
+                className="h-8 w-8 text-destructive rounded-xl"
                 onClick={onDelete}
               >
                 <Trash2 className="h-4 w-4" />
@@ -607,30 +612,32 @@ const QuickStatCard = ({ title, activities, icon }) => {
   const stats = calculateAggregateStats(activities)
 
   return (
-    <Card>
+    <Card className="rounded-3xl border-0 shadow-sm bg-white">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base">
-          {icon}
+        <CardTitle className="flex items-center gap-3 text-base text-black">
+          <div className="w-10 h-10 rounded-xl bg-[#93D6D6] flex items-center justify-center text-[#2D8A8A]">
+            {icon}
+          </div>
           {title}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-xs text-muted-foreground">Distance</p>
-            <p className="text-lg font-semibold">{formatDistance(stats.totalDistance)}</p>
+            <p className="text-xs text-[#6B7280] font-medium">Distance</p>
+            <p className="text-lg font-bold text-black">{formatDistance(stats.totalDistance)}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Time</p>
-            <p className="text-lg font-semibold">{formatDuration(stats.totalTime)}</p>
+            <p className="text-xs text-[#6B7280] font-medium">Time</p>
+            <p className="text-lg font-bold text-black">{formatDuration(stats.totalTime)}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Activities</p>
-            <p className="text-lg font-semibold">{stats.totalActivities}</p>
+            <p className="text-xs text-[#6B7280] font-medium">Activities</p>
+            <p className="text-lg font-bold text-black">{stats.totalActivities}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Elevation</p>
-            <p className="text-lg font-semibold">{Math.round(stats.totalElevation)} m</p>
+            <p className="text-xs text-[#6B7280] font-medium">Elevation</p>
+            <p className="text-lg font-bold text-black">{Math.round(stats.totalElevation)} m</p>
           </div>
         </div>
       </CardContent>
@@ -640,22 +647,22 @@ const QuickStatCard = ({ title, activities, icon }) => {
 
 const LoadingSkeleton = () => (
   <div className="space-y-6">
-    <Card>
+    <Card className="rounded-3xl border-0 shadow-sm bg-[#EDFD93]">
       <CardContent className="pt-6">
-        <Skeleton className="h-8 w-32 mb-2" />
-        <Skeleton className="h-12 w-24" />
-        <Skeleton className="h-2 w-full mt-4" />
+        <Skeleton className="h-8 w-32 mb-2 rounded-lg bg-black/10" />
+        <Skeleton className="h-12 w-24 rounded-lg bg-black/10" />
+        <Skeleton className="h-2 w-full mt-4 rounded-full bg-black/10" />
       </CardContent>
     </Card>
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
       {[1, 2, 3].map((i) => (
-        <Card key={i}>
+        <Card key={i} className="rounded-3xl border-0 shadow-sm bg-white">
           <CardHeader className="pb-2">
-            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-6 w-24 rounded-lg" />
           </CardHeader>
           <CardContent>
-            <Skeleton className="h-10 w-32 mb-2" />
-            <Skeleton className="h-2 w-full" />
+            <Skeleton className="h-10 w-32 mb-2 rounded-lg" />
+            <Skeleton className="h-2 w-full rounded-full" />
           </CardContent>
         </Card>
       ))}

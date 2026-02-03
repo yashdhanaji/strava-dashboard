@@ -46,29 +46,31 @@ const Callback = () => {
   }, [searchParams, handleCallback, navigate])
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-sm text-center">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[#F8F9FA]">
+      <Card className="w-full max-w-sm text-center rounded-3xl border-0 shadow-sm bg-white">
         {error ? (
           <>
             <CardHeader>
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-2">
-                <AlertCircle className="h-6 w-6" />
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600 mb-3">
+                <AlertCircle className="h-7 w-7" />
               </div>
-              <CardTitle className="text-destructive">Authorization Failed</CardTitle>
-              <CardDescription>{error}</CardDescription>
+              <CardTitle className="text-red-600 font-bold">Authorization Failed</CardTitle>
+              <CardDescription className="text-[#6B7280]">{error}</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">Redirecting to login...</p>
+              <p className="text-sm text-[#6B7280]">Redirecting to login...</p>
             </CardContent>
           </>
         ) : (
           <>
             <CardHeader>
-              <div className="mx-auto mb-2">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <div className="mx-auto mb-3">
+                <div className="h-14 w-14 rounded-2xl bg-[#EDFD93] flex items-center justify-center">
+                  <Loader2 className="h-7 w-7 animate-spin text-black/70" />
+                </div>
               </div>
-              <CardTitle>Completing Authorization</CardTitle>
-              <CardDescription>Please wait while we connect to your Strava account.</CardDescription>
+              <CardTitle className="font-bold text-black">Completing Authorization</CardTitle>
+              <CardDescription className="text-[#6B7280]">Please wait while we connect to your Strava account.</CardDescription>
             </CardHeader>
           </>
         )}
