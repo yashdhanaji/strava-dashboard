@@ -4,6 +4,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import stravaApi from '@/services/stravaApi'
 import { toUnixTimestamp } from '@/utils/dateHelpers'
 import { formatDistance, formatDuration, formatPace, formatSpeed, formatElevation } from '@/utils/dataProcessing'
+import polyline from '@mapbox/polyline'
+import { MapContainer, TileLayer, Polyline } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
 
 import { AppSidebar } from '@/components/app-sidebar'
 import { TopNavBar } from '@/components/top-navbar'
@@ -65,6 +68,7 @@ const Activities = () => {
   const [loading, setLoading] = useState(true)
   const [activities, setActivities] = useState([])
   const [timeRange, setTimeRange] = useState('30d')
+  const [customDateRange, setCustomDateRange] = useState(null)
   const [sportFilter, setSportFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortConfig, setSortConfig] = useState({ key: 'start_date', direction: 'desc' })
@@ -76,9 +80,16 @@ const Activities = () => {
   const loadActivities = useCallback(async () => {
     setLoading(true)
     try {
-      const days = TIME_RANGE_DAYS[timeRange]
-      const after = days ? toUnixTimestamp(subDays(new Date(), days)) : null
-      const before = toUnixTimestamp(new Date())
+      let after, before
+
+      if (timeRange === 'custom' && customDateRange?.from && customDateRange?.to) {
+        after = toUnixTimestamp(customDateRange.from)
+        before = toUnixTimestamp(customDateRange.to)
+      } else {
+        const days = TIME_RANGE_DAYS[timeRange]
+        after = days ? toUnixTimestamp(subDays(new Date(), days)) : null
+        before = toUnixTimestamp(new Date())
+      }
 
       const data = await stravaApi.getAllActivities(after, before, (count) => {
         console.log(`Loaded ${count} activities...`)
@@ -91,7 +102,7 @@ const Activities = () => {
     } finally {
       setLoading(false)
     }
-  }, [timeRange])
+  }, [timeRange, customDateRange])
 
   useEffect(() => {
     loadActivities()
@@ -180,6 +191,8 @@ const Activities = () => {
           subtitle={`${filteredActivities.length} activities found`}
           timeRange={timeRange}
           onTimeRangeChange={setTimeRange}
+          customDateRange={customDateRange}
+          onCustomDateRangeChange={setCustomDateRange}
           sportFilter={sportFilter}
           onSportFilterChange={setSportFilter}
         />
@@ -229,9 +242,10 @@ const Activities = () => {
                 <ScrollArea className="w-full">
                   <Table>
                     <TableHeader>
-                      <TableRow>
+                      <TableRow className="bg-[#F8F9FA] hover:bg-[#F8F9FA]">
+                        <TableHead className="w-[60px] text-center font-bold text-black">#</TableHead>
                         <TableHead
-                          className="cursor-pointer hover:bg-muted/50"
+                          className="cursor-pointer hover:bg-[#E5E7EB] font-bold text-black"
                           onClick={() => handleSort('start_date')}
                         >
                           <div className="flex items-center gap-2">
@@ -240,7 +254,7 @@ const Activities = () => {
                           </div>
                         </TableHead>
                         <TableHead
-                          className="cursor-pointer hover:bg-muted/50"
+                          className="cursor-pointer hover:bg-[#E5E7EB] font-bold text-black"
                           onClick={() => handleSort('name')}
                         >
                           <div className="flex items-center gap-2">
@@ -248,9 +262,9 @@ const Activities = () => {
                             {getSortIcon('name')}
                           </div>
                         </TableHead>
-                        <TableHead>Type</TableHead>
+                        <TableHead className="font-bold text-black">Type</TableHead>
                         <TableHead
-                          className="cursor-pointer hover:bg-muted/50 text-right"
+                          className="cursor-pointer hover:bg-[#E5E7EB] text-right font-bold text-black"
                           onClick={() => handleSort('distance')}
                         >
                           <div className="flex items-center justify-end gap-2">
@@ -259,7 +273,7 @@ const Activities = () => {
                           </div>
                         </TableHead>
                         <TableHead
-                          className="cursor-pointer hover:bg-muted/50 text-right"
+                          className="cursor-pointer hover:bg-[#E5E7EB] text-right font-bold text-black"
                           onClick={() => handleSort('moving_time')}
                         >
                           <div className="flex items-center justify-end gap-2">
@@ -267,9 +281,9 @@ const Activities = () => {
                             {getSortIcon('moving_time')}
                           </div>
                         </TableHead>
-                        <TableHead className="text-right hidden md:table-cell">Pace/Speed</TableHead>
+                        <TableHead className="text-right hidden md:table-cell font-bold text-black">Pace/Speed</TableHead>
                         <TableHead
-                          className="cursor-pointer hover:bg-muted/50 text-right hidden lg:table-cell"
+                          className="cursor-pointer hover:bg-[#E5E7EB] text-right hidden lg:table-cell font-bold text-black"
                           onClick={() => handleSort('total_elevation_gain')}
                         >
                           <div className="flex items-center justify-end gap-2">
@@ -281,12 +295,15 @@ const Activities = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paginatedActivities.map((activity) => (
+                      {paginatedActivities.map((activity, index) => (
                         <TableRow
                           key={activity.id}
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => setSelectedActivity(activity)}
                         >
+                          <TableCell className="text-center text-[#6B7280] font-medium">
+                            {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                          </TableCell>
                           <TableCell className="font-medium">
                             {format(new Date(activity.start_date), 'MMM d, yyyy')}
                           </TableCell>
@@ -407,9 +424,57 @@ const Activities = () => {
 }
 
 const ActivityCard = ({ activity, onClick, getTypeColor }) => {
+  // Decode polyline for route display
+  const routeCoords = useMemo(() => {
+    if (activity.map?.summary_polyline) {
+      try {
+        return polyline.decode(activity.map.summary_polyline)
+      } catch {
+        return null
+      }
+    }
+    return null
+  }, [activity.map?.summary_polyline])
+
+  // Calculate bounds for the map
+  const bounds = useMemo(() => {
+    if (!routeCoords || routeCoords.length === 0) return null
+    const lats = routeCoords.map(c => c[0])
+    const lngs = routeCoords.map(c => c[1])
+    return [
+      [Math.min(...lats), Math.min(...lngs)],
+      [Math.max(...lats), Math.max(...lngs)]
+    ]
+  }, [routeCoords])
+
   return (
-    <Card className="cursor-pointer hover:shadow-md transition-shadow rounded-3xl border-0 shadow-sm bg-white" onClick={onClick}>
-      <CardHeader className="pb-2">
+    <Card className="cursor-pointer hover:shadow-md transition-shadow rounded-3xl border-0 shadow-sm bg-white overflow-hidden" onClick={onClick}>
+      {/* Route Map Preview */}
+      {routeCoords && bounds && (
+        <div className="h-32 w-full relative">
+          <MapContainer
+            bounds={bounds}
+            scrollWheelZoom={false}
+            dragging={false}
+            zoomControl={false}
+            attributionControl={false}
+            className="h-full w-full"
+            style={{ background: '#F8F9FA' }}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Polyline
+              positions={routeCoords}
+              pathOptions={{ color: '#FF6B35', weight: 3 }}
+            />
+          </MapContainer>
+          {/* Gradient overlay at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent" />
+        </div>
+      )}
+
+      <CardHeader className={routeCoords ? "pb-2 pt-3" : "pb-2"}>
         <div className="flex items-start justify-between">
           <Badge variant="outline" className={getTypeColor(activity.type)}>
             {activity.type}
@@ -457,6 +522,29 @@ const ActivityCard = ({ activity, onClick, getTypeColor }) => {
 }
 
 const ActivityDetailDialog = ({ activity, onClose, getTypeColor }) => {
+  // Decode polyline for route display
+  const routeCoords = useMemo(() => {
+    if (activity?.map?.summary_polyline) {
+      try {
+        return polyline.decode(activity.map.summary_polyline)
+      } catch {
+        return null
+      }
+    }
+    return null
+  }, [activity?.map?.summary_polyline])
+
+  // Calculate bounds for the map
+  const bounds = useMemo(() => {
+    if (!routeCoords || routeCoords.length === 0) return null
+    const lats = routeCoords.map(c => c[0])
+    const lngs = routeCoords.map(c => c[1])
+    return [
+      [Math.min(...lats), Math.min(...lngs)],
+      [Math.max(...lats), Math.max(...lngs)]
+    ]
+  }, [routeCoords])
+
   if (!activity) return null
 
   const date = new Date(activity.start_date)
@@ -478,6 +566,28 @@ const ActivityDetailDialog = ({ activity, onClose, getTypeColor }) => {
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
+          {/* Route Map */}
+          {routeCoords && bounds && (
+            <div className="h-48 w-full rounded-2xl overflow-hidden relative">
+              <MapContainer
+                bounds={bounds}
+                scrollWheelZoom={false}
+                zoomControl={false}
+                attributionControl={false}
+                className="h-full w-full"
+                style={{ background: '#F8F9FA' }}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Polyline
+                  positions={routeCoords}
+                  pathOptions={{ color: '#FF6B35', weight: 3 }}
+                />
+              </MapContainer>
+            </div>
+          )}
+
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4">
             <StatItem icon={<MapPin />} label="Distance" value={formatDistance(activity.distance)} />

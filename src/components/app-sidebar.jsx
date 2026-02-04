@@ -128,17 +128,6 @@ const DockIcon = ({ item, mouseY, isActive }) => {
         <Icon style={{ width: '45%', height: '45%' }} />
       </motion.div>
 
-      {/* Active indicator dot */}
-      {isActive && (
-        <motion.div
-          layoutId="activeIndicator"
-          className="absolute -right-1 w-1.5 h-1.5 rounded-full bg-black"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        />
-      )}
-
       {/* Glassmorphism tooltip */}
       <Tooltip isVisible={isHovered}>{item.title}</Tooltip>
     </motion.div>

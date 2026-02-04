@@ -293,6 +293,129 @@ class StravaAPI {
             throw error;
         }
     }
+
+    // ============================================
+    // Notifications / Social Features
+    // ============================================
+
+    async getActivityKudos(activityId) {
+        try {
+            const response = await this.client.get(`/activities/${activityId}/kudos`);
+            return response.data;
+        } catch (error) {
+            console.error(`Failed to fetch kudos for activity ${activityId}:`, error);
+            return [];
+        }
+    }
+
+    async getActivityComments(activityId) {
+        try {
+            const response = await this.client.get(`/activities/${activityId}/comments`);
+            return response.data;
+        } catch (error) {
+            console.error(`Failed to fetch comments for activity ${activityId}:`, error);
+            return [];
+        }
+    }
+
+    async getNotifications() {
+        // Fetch recent activities and their social interactions
+        try {
+            const recentActivities = await this.getActivities({
+                page: 1,
+                per_page: 10,
+            });
+
+            const notifications = [];
+
+            for (const activity of recentActivities.slice(0, 5)) {
+                // Fetch kudos for each activity
+                const kudos = await this.getActivityKudos(activity.id);
+                const comments = await this.getActivityComments(activity.id);
+
+                // Add kudos notifications
+                kudos.forEach((kudo) => {
+                    notifications.push({
+                        id: `kudos-${activity.id}-${kudo.firstname}`,
+                        type: 'kudos',
+                        activity: {
+                            id: activity.id,
+                            name: activity.name,
+                            type: activity.type,
+                        },
+                        user: {
+                            firstname: kudo.firstname,
+                            lastname: kudo.lastname,
+                            profile: kudo.profile,
+                        },
+                        timestamp: activity.start_date,
+                        read: false,
+                    });
+                });
+
+                // Add comment notifications
+                comments.forEach((comment) => {
+                    notifications.push({
+                        id: `comment-${activity.id}-${comment.id}`,
+                        type: 'comment',
+                        activity: {
+                            id: activity.id,
+                            name: activity.name,
+                            type: activity.type,
+                        },
+                        user: {
+                            firstname: comment.athlete.firstname,
+                            lastname: comment.athlete.lastname,
+                            profile: comment.athlete.profile,
+                        },
+                        text: comment.text,
+                        timestamp: comment.created_at,
+                        read: false,
+                    });
+                });
+
+                // Add achievement notifications
+                if (activity.achievement_count > 0) {
+                    notifications.push({
+                        id: `achievement-${activity.id}`,
+                        type: 'achievement',
+                        activity: {
+                            id: activity.id,
+                            name: activity.name,
+                            type: activity.type,
+                        },
+                        count: activity.achievement_count,
+                        timestamp: activity.start_date,
+                        read: false,
+                    });
+                }
+
+                // Add PR notifications
+                if (activity.pr_count > 0) {
+                    notifications.push({
+                        id: `pr-${activity.id}`,
+                        type: 'pr',
+                        activity: {
+                            id: activity.id,
+                            name: activity.name,
+                            type: activity.type,
+                        },
+                        count: activity.pr_count,
+                        timestamp: activity.start_date,
+                        read: false,
+                    });
+                }
+            }
+
+            // Sort by timestamp (most recent first)
+            notifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            return notifications;
+        } catch (error) {
+            console.error('Failed to fetch notifications:', error);
+            return [];
+        }
+    }
 }
 
 export default new StravaAPI();

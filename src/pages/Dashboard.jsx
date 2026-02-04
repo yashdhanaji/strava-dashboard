@@ -35,6 +35,7 @@ const Dashboard = () => {
   const [activities, setActivities] = useState([])
   const [filteredActivities, setFilteredActivities] = useState([])
   const [timeRange, setTimeRange] = useState('30d')
+  const [customDateRange, setCustomDateRange] = useState(null)
   const [sportFilter, setSportFilter] = useState('all')
   const [stats, setStats] = useState(null)
   const [records, setRecords] = useState(null)
@@ -43,9 +44,16 @@ const Dashboard = () => {
   const loadActivities = useCallback(async () => {
     setLoading(true)
     try {
-      const days = TIME_RANGE_DAYS[timeRange]
-      const after = days ? toUnixTimestamp(subDays(new Date(), days)) : null
-      const before = toUnixTimestamp(new Date())
+      let after, before
+
+      if (timeRange === 'custom' && customDateRange?.from && customDateRange?.to) {
+        after = toUnixTimestamp(customDateRange.from)
+        before = toUnixTimestamp(customDateRange.to)
+      } else {
+        const days = TIME_RANGE_DAYS[timeRange]
+        after = days ? toUnixTimestamp(subDays(new Date(), days)) : null
+        before = toUnixTimestamp(new Date())
+      }
 
       const data = await stravaApi.getAllActivities(after, before, (count) => {
         console.log(`Loaded ${count} activities...`)
@@ -57,7 +65,7 @@ const Dashboard = () => {
     } finally {
       setLoading(false)
     }
-  }, [timeRange])
+  }, [timeRange, customDateRange])
 
   // Filter activities by sport type
   const filterActivities = useCallback(() => {
@@ -116,6 +124,8 @@ const Dashboard = () => {
           subtitle="Your athletic performance overview"
           timeRange={timeRange}
           onTimeRangeChange={setTimeRange}
+          customDateRange={customDateRange}
+          onCustomDateRangeChange={setCustomDateRange}
           sportFilter={sportFilter}
           onSportFilterChange={setSportFilter}
         />

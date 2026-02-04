@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Plus, Calendar, BarChart3 } from 'lucide-react'
+import { Plus, Calendar, BarChart3, Upload, Wand2 } from 'lucide-react'
 
 import RaceGoalWizard from '@/components/training/RaceGoalWizard'
+import CSVUploadWizard from '@/components/training/CSVUploadWizard'
 import TrainingCalendar from '@/components/training/TrainingCalendar'
 import PlanSummary from '@/components/training/PlanSummary'
 import WorkoutCard from '@/components/training/WorkoutCard'
@@ -29,6 +30,7 @@ const Training = () => {
   const [activities, setActivities] = useState([])
   const [activePlan, setActivePlan] = useState(null)
   const [showWizard, setShowWizard] = useState(false)
+  const [wizardType, setWizardType] = useState(null) // 'generate' or 'csv'
   const [activeTab, setActiveTab] = useState('overview')
 
   // Load activities and active plan
@@ -44,9 +46,10 @@ const Training = () => {
       const plan = getActivePlan()
       setActivePlan(plan)
 
-      // If no plan exists, show wizard
+      // If no plan exists, show wizard selection
       if (!plan) {
         setShowWizard(true)
+        setWizardType(null) // Show selection screen
       }
     } catch (error) {
       console.error('Failed to load data:', error)
@@ -64,6 +67,7 @@ const Training = () => {
     savePlan(plan)
     setActivePlan(plan)
     setShowWizard(false)
+    setWizardType(null)
     setActiveTab('calendar')
   }
 
@@ -72,6 +76,23 @@ const Training = () => {
     deletePlan(planId)
     setActivePlan(null)
     setShowWizard(true)
+    setWizardType(null)
+  }
+
+  // Handle wizard cancel
+  const handleWizardCancel = () => {
+    if (activePlan) {
+      setShowWizard(false)
+      setWizardType(null)
+    } else {
+      setWizardType(null) // Go back to selection
+    }
+  }
+
+  // Handle starting a new plan (from existing plan)
+  const handleCreateNew = () => {
+    setShowWizard(true)
+    setWizardType(null)
   }
 
   // Handle workout completion toggle
@@ -102,15 +123,29 @@ const Training = () => {
           {loading ? (
             <LoadingSkeleton />
           ) : showWizard ? (
-            <RaceGoalWizard
-              activities={activities}
-              onPlanGenerated={handlePlanGenerated}
-              onCancel={() => {
-                if (activePlan) {
-                  setShowWizard(false)
-                }
-              }}
-            />
+            wizardType === 'generate' ? (
+              <RaceGoalWizard
+                activities={activities}
+                onPlanGenerated={handlePlanGenerated}
+                onCancel={handleWizardCancel}
+              />
+            ) : wizardType === 'csv' ? (
+              <CSVUploadWizard
+                onPlanGenerated={handlePlanGenerated}
+                onCancel={handleWizardCancel}
+              />
+            ) : (
+              <WizardSelection
+                onSelectGenerate={() => setWizardType('generate')}
+                onSelectCSV={() => setWizardType('csv')}
+                onCancel={() => {
+                  if (activePlan) {
+                    setShowWizard(false)
+                  }
+                }}
+                hasExistingPlan={!!activePlan}
+              />
+            )
           ) : activePlan ? (
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full max-w-md grid-cols-3">
@@ -134,7 +169,7 @@ const Training = () => {
                     <PlanSummary
                       plan={activePlan}
                       onDeletePlan={handleDeletePlan}
-                      onCreateNew={() => setShowWizard(true)}
+                      onCreateNew={handleCreateNew}
                     />
                   </div>
                   <div className="space-y-4">
@@ -211,7 +246,7 @@ const Training = () => {
             <PlanSummary
               plan={null}
               onDeletePlan={handleDeletePlan}
-              onCreateNew={() => setShowWizard(true)}
+              onCreateNew={handleCreateNew}
             />
           )}
         </div>
@@ -219,6 +254,56 @@ const Training = () => {
     </div>
   )
 }
+
+// Wizard selection screen
+const WizardSelection = ({ onSelectGenerate, onSelectCSV, onCancel, hasExistingPlan }) => (
+  <div className="w-full max-w-2xl mx-auto">
+    <Card className="rounded-3xl border-0 shadow-sm bg-white">
+      <CardHeader className="text-center">
+        <h2 className="text-2xl font-semibold">Create Training Plan</h2>
+        <p className="text-muted-foreground">
+          Choose how you want to create your training plan
+        </p>
+      </CardHeader>
+      <CardContent className="grid gap-4 sm:grid-cols-2 pb-6">
+        {/* Generate with AI option */}
+        <button
+          onClick={onSelectGenerate}
+          className="flex flex-col items-center p-6 rounded-2xl border-2 border-transparent bg-[#F8F9FA] hover:border-primary hover:bg-primary/5 transition-all text-center group"
+        >
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+            <Wand2 className="h-7 w-7 text-primary" />
+          </div>
+          <h3 className="font-semibold mb-2">Generate Plan</h3>
+          <p className="text-sm text-muted-foreground">
+            Answer a few questions and we'll create a personalized training plan based on your goals and fitness
+          </p>
+        </button>
+
+        {/* Import CSV option */}
+        <button
+          onClick={onSelectCSV}
+          className="flex flex-col items-center p-6 rounded-2xl border-2 border-transparent bg-[#F8F9FA] hover:border-primary hover:bg-primary/5 transition-all text-center group"
+        >
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+            <Upload className="h-7 w-7 text-primary" />
+          </div>
+          <h3 className="font-semibold mb-2">Import from CSV</h3>
+          <p className="text-sm text-muted-foreground">
+            Upload your own training plan from a CSV file with custom workouts, dates, and paces
+          </p>
+        </button>
+      </CardContent>
+      {hasExistingPlan && (
+        <div className="px-6 pb-6 pt-0">
+          <Button variant="ghost" onClick={onCancel} className="w-full">
+            Cancel
+          </Button>
+        </div>
+      )}
+    </Card>
+  </div>
+)
 
 const LoadingSkeleton = () => (
   <div className="space-y-6">

@@ -210,3 +210,17 @@
   width: 1.5rem;
   height: 1.5rem;
 }
+
+/* Leaflet Map Overrides */
+.leaflet-container {
+  background: #F8F9FA !important;
+  font-family: inherit !important;
+}
+
+.leaflet-control-container {
+  display: none;
+}
+
+.leaflet-pane {
+  z-index: 1;
+}
