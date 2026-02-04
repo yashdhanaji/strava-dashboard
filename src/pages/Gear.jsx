@@ -42,7 +42,7 @@ const Gear = () => {
   return (
     <div className="min-h-screen bg-[#F8F9FA]">
       <AppSidebar />
-      <main className="ml-[88px]">
+      <main className="ml-0 md:ml-[88px]">
         <TopNavBar
           title="Gear & Equipment"
           subtitle="Track your equipment usage and mileage"

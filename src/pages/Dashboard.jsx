@@ -117,8 +117,8 @@ const Dashboard = () => {
       {/* Floating Dock Sidebar */}
       <AppSidebar />
 
-      {/* Main Content - with left margin for sidebar */}
-      <main className="ml-[88px]">
+      {/* Main Content - with left margin for sidebar on desktop */}
+      <main className="ml-0 md:ml-[88px]">
         <TopNavBar
           title={`Welcome back, ${user?.firstname}`}
           subtitle="Your athletic performance overview"

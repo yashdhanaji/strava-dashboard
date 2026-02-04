@@ -34,9 +34,35 @@ This is a React SPA that displays Strava activity statistics and visualizations.
 
 ### Component Structure
 
-- **Pages**: Login, Callback (OAuth), Dashboard (main view)
+- **Pages**: Login, Callback (OAuth), Dashboard (main view), Training, Goals, Records, Settings
 - **Charts**: TrendChart, FrequencyChart, DistributionChart, CalendarHeatmap (all use Recharts)
+- **Training**: RaceGoalWizard, CSVUploadWizard, TrainingCalendar, WorkoutCard, PlanSummary
 - **Layout**: Single layout component wraps authenticated pages
+
+### Training Plan System
+
+Training plans are stored in localStorage with key `strava_training_plans`.
+
+**Two ways to create a plan:**
+1. **Generate Plan** (`RaceGoalWizard`) - AI-generated based on race goals and fitness
+2. **Import from CSV** (`CSVUploadWizard`) - Upload custom training plans
+
+**CSV Import Format:**
+```csv
+date,type,title,description,distance,duration,pace
+2026-02-10,easy,Easy Run,Conversational pace,8,52,6:30/km
+2026-02-11,rest,Rest Day,,0,0,
+2026-02-12,tempo,Tempo Run,20min at threshold,10,50,5:00/km
+```
+
+- Required columns: `date` (YYYY-MM-DD or MM/DD/YYYY), `type`
+- Valid workout types: `easy`, `long`, `tempo`, `intervals`, `threshold`, `strides`, `hills`, `recovery`, `rest`, `race`
+- Optional columns: `title`, `description`, `distance` (km), `duration` (min), `pace`
+
+**Key utilities:**
+- `utils/trainingPlanGenerator.js` - Plan generation, storage, workout types
+- `utils/csvParser.js` - CSV parsing and validation
+- `utils/csvToTrainingPlan.js` - Converts CSV rows to week-based plan structure
 
 ### Environment Variables
 

@@ -249,7 +249,7 @@ export function AppSidebar() {
     <aside
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="fixed left-3 top-1/2 -translate-y-1/2 z-40"
+      className="hidden md:flex fixed left-3 top-1/2 -translate-y-1/2 z-40"
     >
       <div className="flex flex-col items-center py-4 px-2.5 rounded-3xl
         bg-white/80 backdrop-blur-xl border border-black/5

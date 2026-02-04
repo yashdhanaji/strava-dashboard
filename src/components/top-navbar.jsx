@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from "react"
-import { Bell, ChevronDown, LogOut, Settings, Search, CalendarDays, Heart, MessageCircle, Trophy, Medal, Loader2, MapPin, Clock, X } from "lucide-react"
+import { Bell, ChevronDown, LogOut, Settings, Search, CalendarDays, Heart, MessageCircle, Trophy, Medal, Loader2, MapPin, Clock, X, Filter, SlidersHorizontal } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useNavigate, useLocation } from "react-router-dom"
 import { format, formatDistanceToNow } from "date-fns"
 import stravaApi from "@/services/stravaApi"
 import { formatDistance, formatDuration } from "@/utils/dataProcessing"
+import { useIsMobile } from "@/hooks/useIsMobile"
+import { MobileNav } from "@/components/MobileNav"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -16,6 +18,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
@@ -50,6 +55,7 @@ export function TopNavBar({
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const isMobile = useIsMobile()
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [dateRange, setDateRange] = useState(customDateRange || { from: undefined, to: undefined })
   const [notifications, setNotifications] = useState([])
@@ -200,28 +206,36 @@ export function TopNavBar({
     return 'Custom'
   }
 
+  // Get current filter label for mobile dropdown
+  const currentTimeLabel = QUICK_TIME_FILTERS.find(f => f.value === timeRange)?.label ||
+    (timeRange === 'custom' ? formatCustomRange() : timeRange)
+  const currentSportLabel = QUICK_SPORT_FILTERS.find(f => f.value === sportFilter)?.label || sportFilter
+
   return (
     <header className="sticky top-0 z-30 pt-3 px-3">
-      <div className="flex h-14 items-center justify-between px-6 rounded-3xl
+      <div className="flex h-14 items-center justify-between px-3 sm:px-6 rounded-3xl
         bg-white/80 backdrop-blur-xl border border-black/5
         shadow-lg shadow-black/5">
-        {/* Left: Section Context */}
-        <div className="flex items-center gap-4 min-w-[200px]">
+        {/* Left: Mobile hamburger + Section Context */}
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0 sm:min-w-[200px]">
+          {/* Mobile Navigation Trigger */}
+          <MobileNav />
+
           {(title || subtitle) && (
-            <div>
+            <div className="min-w-0">
               {title && (
-                <h1 className="text-lg font-bold text-black tracking-tight">{title}</h1>
+                <h1 className="text-base sm:text-lg font-bold text-black tracking-tight truncate">{title}</h1>
               )}
               {subtitle && (
-                <p className="text-xs text-[#6B7280] font-medium">{subtitle}</p>
+                <p className="text-xs text-[#6B7280] font-medium hidden sm:block">{subtitle}</p>
               )}
             </div>
           )}
         </div>
 
-        {/* Center: Pill-Style Filter Tabs */}
+        {/* Center: Pill-Style Filter Tabs (Desktop only) */}
         {showFilters && (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="hidden md:flex flex-1 items-center justify-center">
             <div className="flex items-center gap-2">
               {/* Time Range Pills */}
               {onTimeRangeChange && (
@@ -279,7 +293,7 @@ export function TopNavBar({
                         defaultMonth={dateRange?.from}
                         selected={dateRange}
                         onSelect={handleDateRangeSelect}
-                        numberOfMonths={2}
+                        numberOfMonths={isMobile ? 1 : 2}
                         disabled={{ after: new Date() }}
                         className="rounded-2xl"
                       />
@@ -333,11 +347,136 @@ export function TopNavBar({
           </div>
         )}
 
-        {/* Spacer when no filters */}
-        {!showFilters && <div className="flex-1" />}
+        {/* Spacer when no filters (desktop) */}
+        {!showFilters && <div className="hidden md:flex flex-1" />}
 
         {/* Right: Global Actions & User Controls */}
-        <div className="flex items-center gap-3 min-w-[200px] justify-end">
+        <div className="flex items-center gap-1 sm:gap-3 min-w-0 sm:min-w-[200px] justify-end">
+          {/* Mobile Filters Dropdown */}
+          {showFilters && (onTimeRangeChange || onSportFilterChange) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden h-10 w-10 rounded-xl text-[#6B7280] hover:text-black hover:bg-[#F1F3F5]"
+                >
+                  <SlidersHorizontal className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2">
+                {onTimeRangeChange && (
+                  <>
+                    <DropdownMenuLabel className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider px-2">
+                      Time Range
+                    </DropdownMenuLabel>
+                    <DropdownMenuRadioGroup value={timeRange} onValueChange={(value) => {
+                      onTimeRangeChange(value)
+                      if (value !== 'custom') {
+                        setDateRange({ from: undefined, to: undefined })
+                      }
+                    }}>
+                      {QUICK_TIME_FILTERS.map((filter) => (
+                        <DropdownMenuRadioItem
+                          key={filter.value}
+                          value={filter.value}
+                          className="rounded-xl py-2 px-3 text-[13px] font-medium cursor-pointer"
+                        >
+                          {filter.label === '7D' ? 'Last 7 Days' :
+                           filter.label === '30D' ? 'Last 30 Days' :
+                           filter.label === '3M' ? 'Last 3 Months' :
+                           filter.label === '1Y' ? 'Last Year' :
+                           filter.label === 'All' ? 'All Time' : filter.label}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                    {/* Custom Date Range for Mobile */}
+                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                      <PopoverTrigger asChild>
+                        <button
+                          className={`w-full text-left rounded-xl py-2 px-3 text-[13px] font-medium transition-colors flex items-center gap-2 ${
+                            timeRange === 'custom'
+                              ? 'bg-[#F1F3F5] text-black'
+                              : 'text-[#6B7280] hover:bg-[#F1F3F5] hover:text-black'
+                          }`}
+                        >
+                          <CalendarDays className="h-4 w-4" />
+                          {timeRange === 'custom' ? formatCustomRange() : 'Custom Range'}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[calc(100vw-2rem)] max-w-[320px] p-0 rounded-2xl" align="end">
+                        <div className="p-3 border-b border-[#F1F3F5]">
+                          <p className="text-sm font-semibold text-black">Select date range</p>
+                          <p className="text-xs text-[#6B7280]">
+                            {dateRange?.from ? (
+                              dateRange.to ? (
+                                `${format(dateRange.from, 'MMM d, yyyy')} - ${format(dateRange.to, 'MMM d, yyyy')}`
+                              ) : (
+                                `${format(dateRange.from, 'MMM d, yyyy')} - Select end date`
+                              )
+                            ) : (
+                              'Click to select start date'
+                            )}
+                          </p>
+                        </div>
+                        <Calendar
+                          mode="range"
+                          defaultMonth={dateRange?.from}
+                          selected={dateRange}
+                          onSelect={handleDateRangeSelect}
+                          numberOfMonths={1}
+                          disabled={{ after: new Date() }}
+                          className="rounded-2xl"
+                        />
+                        <div className="p-3 border-t border-[#F1F3F5] flex items-center justify-between gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleClearDateRange}
+                            className="text-[#6B7280] hover:text-black"
+                          >
+                            Clear
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={handleApplyDateRange}
+                            disabled={!dateRange?.from || !dateRange?.to}
+                            className="bg-black text-white hover:bg-black/90 rounded-xl"
+                          >
+                            Apply
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </>
+                )}
+
+                {onTimeRangeChange && onSportFilterChange && (
+                  <DropdownMenuSeparator className="bg-[#F1F3F5] my-2" />
+                )}
+
+                {onSportFilterChange && (
+                  <>
+                    <DropdownMenuLabel className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider px-2">
+                      Activity Type
+                    </DropdownMenuLabel>
+                    <DropdownMenuRadioGroup value={sportFilter} onValueChange={onSportFilterChange}>
+                      {QUICK_SPORT_FILTERS.map((filter) => (
+                        <DropdownMenuRadioItem
+                          key={filter.value}
+                          value={filter.value}
+                          className="rounded-xl py-2 px-3 text-[13px] font-medium cursor-pointer"
+                        >
+                          {filter.label === 'all' ? 'All Activities' : filter.label}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           {/* Search */}
           <Popover open={searchOpen} onOpenChange={setSearchOpen}>
             <PopoverTrigger asChild>
@@ -349,7 +488,7 @@ export function TopNavBar({
                 <Search className="h-5 w-5" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[420px] p-0 rounded-2xl" align="end">
+            <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[420px] max-w-[420px] p-0 rounded-2xl" align="end">
               <div className="p-3 border-b border-[#F1F3F5]">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B7280]" />
@@ -370,7 +509,7 @@ export function TopNavBar({
                   )}
                 </div>
               </div>
-              <ScrollArea className="h-[350px]">
+              <ScrollArea className="h-[300px] sm:h-[350px]">
                 {searchLoading && !hasLoadedActivities ? (
                   <div className="flex flex-col items-center justify-center py-12">
                     <Loader2 className="h-8 w-8 animate-spin text-[#6B7280] mb-3" />
@@ -411,7 +550,7 @@ export function TopNavBar({
                               <Clock className="h-3 w-3" />
                               {formatDuration(activity.moving_time)}
                             </span>
-                            <span>{format(new Date(activity.start_date), 'MMM d, yyyy')}</span>
+                            <span className="hidden sm:inline">{format(new Date(activity.start_date), 'MMM d, yyyy')}</span>
                           </div>
                         </div>
                       ))}
@@ -446,7 +585,7 @@ export function TopNavBar({
                               <Clock className="h-3 w-3" />
                               {formatDuration(activity.moving_time)}
                             </span>
-                            <span>{format(new Date(activity.start_date), 'MMM d, yyyy')}</span>
+                            <span className="hidden sm:inline">{format(new Date(activity.start_date), 'MMM d, yyyy')}</span>
                           </div>
                         </div>
                       ))}
@@ -476,7 +615,7 @@ export function TopNavBar({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-xl text-[#6B7280] hover:text-black hover:bg-[#F1F3F5] relative"
+                className="hidden sm:flex h-10 w-10 rounded-xl text-[#6B7280] hover:text-black hover:bg-[#F1F3F5] relative"
               >
                 <Bell className="h-5 w-5" />
                 {(unreadCount > 0 || !hasLoadedNotifications) && (
@@ -484,7 +623,7 @@ export function TopNavBar({
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-96 p-0 rounded-2xl" align="end">
+            <PopoverContent className="w-[calc(100vw-2rem)] sm:w-96 max-w-96 p-0 rounded-2xl" align="end">
               <div className="p-4 border-b border-[#F1F3F5] flex items-center justify-between">
                 <div>
                   <p className="text-sm font-bold text-black">Notifications</p>
@@ -509,7 +648,7 @@ export function TopNavBar({
                   )}
                 </Button>
               </div>
-              <ScrollArea className="h-[400px]">
+              <ScrollArea className="h-[350px] sm:h-[400px]">
                 {notificationsLoading && notifications.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12">
                     <Loader2 className="h-8 w-8 animate-spin text-[#6B7280] mb-3" />
@@ -576,15 +715,15 @@ export function TopNavBar({
             </PopoverContent>
           </Popover>
 
-          {/* Divider */}
-          <div className="w-px h-8 bg-[#E5E7EB]" />
+          {/* Divider - hidden on small mobile */}
+          <div className="hidden sm:block w-px h-8 bg-[#E5E7EB]" />
 
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="h-10 gap-3 px-3 rounded-xl hover:bg-[#F1F3F5] focus-visible:ring-0"
+                className="h-10 gap-2 sm:gap-3 px-2 sm:px-3 rounded-xl hover:bg-[#F1F3F5] focus-visible:ring-0"
               >
                 <Avatar className="h-8 w-8 rounded-xl">
                   <AvatarImage src={user?.profile} alt={user?.firstname} />
@@ -600,7 +739,7 @@ export function TopNavBar({
                     Athlete
                   </span>
                 </div>
-                <ChevronDown className="h-4 w-4 text-[#6B7280]" />
+                <ChevronDown className="hidden sm:block h-4 w-4 text-[#6B7280]" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2">
